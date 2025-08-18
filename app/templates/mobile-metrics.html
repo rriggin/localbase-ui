@@ -295,7 +295,13 @@
                     <i class="fas fa-chart-pie"></i>
                 </div>
                 <div class="card-title">Leads by Source</div>
-                <div class="chart-container" style="height: 300px; margin-top: 40px;">
+                <div class="source-list" id="sourcesList">
+                    <div class="loading">
+                        <i class="fas fa-spinner"></i>
+                        <span>Loading sources...</span>
+                    </div>
+                </div>
+                <div class="chart-container">
                     <canvas id="sourcesChart"></canvas>
                 </div>
             </div>
@@ -358,6 +364,19 @@
                 document.getElementById('adSpendValue').textContent = `$${yesterdayData.adSpend.toFixed(2)}`;
                 document.getElementById('spendDetail').textContent = yesterdayData.spendDetail;
 
+                // Update sources list
+                const sourcesList = document.getElementById('sourcesList');
+                const sourcesHtml = yesterdayData.sources
+                    .filter(s => s.count > 0)
+                    .map(source => `
+                        <div class="source-item">
+                            <div class="source-name">${source.name}</div>
+                            <div class="source-count">${source.count}</div>
+                        </div>
+                    `).join('');
+                
+                sourcesList.innerHTML = sourcesHtml || '<div style="text-align: center; color: var(--secondary-text);">No leads yesterday</div>';
+
                 // Initialize pie chart
                 setTimeout(() => {
                     initSourcesChart();
@@ -371,6 +390,7 @@
                 document.getElementById('leadsDetail').textContent = 'Error loading data';
                 document.getElementById('adSpendValue').textContent = '?';
                 document.getElementById('spendDetail').textContent = 'Error loading data';
+                document.getElementById('sourcesList').innerHTML = '<div style="text-align: center; color: var(--secondary-text);">Error loading sources</div>';
             }
         }
 
@@ -393,7 +413,7 @@
                     labels: data.map(s => s.name),
                     datasets: [{
                         data: data.map(s => s.count),
-                        backgroundColor: ['var(--tide-blue)', 'var(--tide-green)', '#FFB366', '#B794F6'],
+                        backgroundColor: ['#5F8DFF', '#5DD6C7', '#FFB366', '#B794F6', '#FF6B6B', '#4ECDC4'],
                         borderWidth: 0
                     }]
                 },
@@ -403,6 +423,13 @@
                     plugins: {
                         legend: {
                             display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#1a1a2e',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#5F8DFF',
+                            borderWidth: 1
                         }
                     }
                 }

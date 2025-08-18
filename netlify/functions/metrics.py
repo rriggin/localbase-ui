@@ -1,10 +1,9 @@
 import json
-from datetime import datetime, timedelta
-import random
 import sqlite3
+from datetime import datetime, timedelta
 import os
 
-def handler(event, context):
+def lambda_handler(event, context):
     """Netlify function to serve LocalBase metrics data"""
     
     # CORS headers
@@ -24,20 +23,17 @@ def handler(event, context):
         }
     
     try:
-        # Get path from event - could be in 'path' or 'rawPath' 
-        path = event.get('path', event.get('rawPath', ''))
-        query_params = event.get('queryStringParameters', {}) or {}
+        path = event['path']
         
-        # Debug logging
-        print(f"Event path: {path}")
-        print(f"Event keys: {list(event.keys())}")
+        if path.endswith('/yesterday'):
+            date_str = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+        else:
+            # Extract date from path if provided
+            date_str = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
         
-        # Always use yesterday for now (can be enhanced later)
-        date_str = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
-        
-        # Try to get real data first, fallback to demo data
-        leads_data = get_deals_for_date(date_str)
-        ad_spend_data = get_ad_spend_for_date(date_str)
+        # Get data
+        leads_data = get_roofmaxx_deals_for_date(date_str)
+        ad_spend_data = get_google_ads_spend_for_date(date_str)
         
         response_data = {
             'date': date_str,
@@ -53,39 +49,42 @@ def handler(event, context):
         }
         
     except Exception as e:
-        # Fallback to demo data if anything fails
-        leads_data = get_demo_deals_for_date(date_str if 'date_str' in locals() else '2025-01-16')
-        ad_spend_data = get_demo_ad_spend_for_date(date_str if 'date_str' in locals() else '2025-01-16')
-        
         return {
-            'statusCode': 200,
+            'statusCode': 500,
             'headers': headers,
             'body': json.dumps({
-                'date': date_str if 'date_str' in locals() else '2025-01-16',
-                'leads': leads_data,
-                'adSpend': ad_spend_data,
-                'errors': [f'Using demo data: {str(e)}']
+                'error': str(e),
+                'date': date_str if 'date_str' in locals() else 'unknown',
+                'leads': {'count': 0, 'detail': f'Error: {str(e)}', 'sources': []},
+                'adSpend': {'amount': 0, 'detail': f'Error: {str(e)}'},
+                'errors': [str(e)]
             })
         }
 
-def get_deals_for_date(date_str):
-    """Get real RoofMaxx deals data if database exists"""
+def get_roofmaxx_deals_for_date(date_str):
+    """Get RoofMaxx deals data for a specific date"""
+    import json
+    
     try:
-        # Try multiple possible database paths
-        possible_paths = [
-            'databases/roofmaxx_deals.db',
-            '/opt/build/repo/databases/roofmaxx_deals.db',
-            './databases/roofmaxx_deals.db'
+        # Multiple possible paths for database
+        db_paths = [
+            '/opt/build/repo/ui/data/roofmaxx/roofmaxx_deals.db',  # Netlify deployment
+            'data/roofmaxx/roofmaxx_deals.db',  # Local testing from ui/
+            '../data/roofmaxx/roofmaxx_deals.db'  # Local testing relative
         ]
         
         db_path = None
-        for path in possible_paths:
+        for path in db_paths:
             if os.path.exists(path):
                 db_path = path
                 break
         
         if not db_path:
-            raise Exception("Database not found")
+            return {
+                'count': 0,
+                'detail': 'Database file not found',
+                'sources': []
+            }
         
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
@@ -99,43 +98,41 @@ def get_deals_for_date(date_str):
         
         total_count = cursor.fetchone()[0]
         
-        # Get deals by source
+        # Get deals with raw_data to extract dealtype
         cursor.execute("""
-            SELECT 
-                CASE 
-                    WHEN lead_source IS NULL OR lead_source = '' THEN 'Unknown'
-                    ELSE lead_source
-                END as source,
-                COUNT(*) as count
+            SELECT lead_source, raw_data
             FROM deals 
             WHERE DATE(created_at) = ?
-            GROUP BY lead_source
-            ORDER BY count DESC
         """, (date_str,))
         
-        sources_raw = cursor.fetchall()
+        deals_raw = cursor.fetchall()
         conn.close()
         
-        # Map deal types to readable names
-        deal_type_mapping = {
-            'NAP': 'Neighborhood Awareness Program',
-            'NAP-L': 'NAP - Lead',
-            'NAP-S': 'NAP - Sale',
-            'RMCL': 'RoofMaxx Customer Lead',
-            'GRML': 'Google/Referral Lead',
-            'Unknown': 'Unknown Source'
-        }
+        # Count by source, extracting from raw_data if needed
+        source_counts = {}
+        for lead_source, raw_data in deals_raw:
+            # Try to get dealtype from raw_data if lead_source is empty
+            if (not lead_source or lead_source == '') and raw_data:
+                try:
+                    data = json.loads(raw_data)
+                    lead_source = data.get('dealtype', 'Unknown')
+                except (json.JSONDecodeError, TypeError):
+                    lead_source = 'Unknown'
+            elif not lead_source:
+                lead_source = 'Unknown'
+            
+            source_counts[lead_source] = source_counts.get(lead_source, 0) + 1
         
+        # Convert to list format
         sources = []
-        for source, count in sources_raw:
-            readable_name = deal_type_mapping.get(source, source)
+        for source, count in sorted(source_counts.items(), key=lambda x: x[1], reverse=True):
             sources.append({
                 'code': source,
-                'name': readable_name,
+                'name': source,
                 'count': count
             })
         
-        detail = f"Found {total_count} leads from {len(sources)} sources" if total_count > 0 else "No leads found for this date"
+        detail = f"Yesterday's total" if total_count > 0 else "No leads found for this date"
         
         return {
             'count': total_count,
@@ -144,27 +141,33 @@ def get_deals_for_date(date_str):
         }
         
     except Exception as e:
-        # Fallback to demo data
-        return get_demo_deals_for_date(date_str)
+        return {
+            'count': 0,
+            'detail': f'Database error: {str(e)}',
+            'sources': []
+        }
 
-def get_ad_spend_for_date(date_str):
-    """Get real Google Ads spend data if database exists"""
+def get_google_ads_spend_for_date(date_str):
+    """Get Google Ads spend data for a specific date"""
     try:
-        # Try multiple possible database paths
-        possible_paths = [
-            'databases/roofmaxx_google_ads.db',
-            '/opt/build/repo/databases/roofmaxx_google_ads.db',
-            './databases/roofmaxx_google_ads.db'
+        # Multiple possible paths for database
+        db_paths = [
+            '/opt/build/repo/ui/data/roofmaxx/roofmaxx_google_ads.db',  # Netlify deployment
+            'data/roofmaxx/roofmaxx_google_ads.db',  # Local testing from ui/
+            '../data/roofmaxx/roofmaxx_google_ads.db'  # Local testing relative
         ]
         
         db_path = None
-        for path in possible_paths:
+        for path in db_paths:
             if os.path.exists(path):
                 db_path = path
                 break
         
         if not db_path:
-            raise Exception("Ads database not found")
+            return {
+                'amount': 0,
+                'detail': 'Google Ads database not found'
+            }
         
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
@@ -190,57 +193,10 @@ def get_ad_spend_for_date(date_str):
         }
         
     except Exception as e:
-        # Fallback to demo data
-        return get_demo_ad_spend_for_date(date_str)
-
-def get_demo_deals_for_date(date_str):
-    """Get realistic demo RoofMaxx deals data"""
-    # Use date as seed for consistent demo data
-    random.seed(hash(date_str))
-    
-    total_count = random.randint(12, 28)
-    
-    # Realistic RoofMaxx lead sources with typical distributions
-    sources = [
-        {'code': 'NAP', 'name': 'Neighborhood Awareness Program', 'count': random.randint(4, 12)},
-        {'code': 'RMCL', 'name': 'RoofMaxx Customer Lead', 'count': random.randint(3, 8)},
-        {'code': 'GRML', 'name': 'Google/Referral Lead', 'count': random.randint(2, 6)},
-        {'code': 'NAP-L', 'name': 'NAP - Lead', 'count': random.randint(1, 5)},
-        {'code': 'NAP-S', 'name': 'NAP - Sale', 'count': random.randint(0, 3)},
-    ]
-    
-    # Adjust to match realistic total
-    actual_total = sum(s['count'] for s in sources)
-    diff = total_count - actual_total
-    if diff != 0:
-        sources[0]['count'] = max(0, sources[0]['count'] + diff)
-    
-    # Remove sources with 0 count
-    sources = [s for s in sources if s['count'] > 0]
-    final_total = sum(s['count'] for s in sources)
-    
-    detail = f"Found {final_total} leads from {len(sources)} sources (demo data)"
-    
-    return {
-        'count': final_total,
-        'detail': detail,
-        'sources': sources
-    }
-
-def get_demo_ad_spend_for_date(date_str):
-    """Get realistic demo Google Ads spend data"""
-    random.seed(hash(date_str + "ads"))
-    
-    # Realistic daily ad spend range for roofing company
-    spend = round(random.uniform(285.50, 950.75), 2)
-    campaigns = random.randint(4, 9)
-    
-    detail = f"Across {campaigns} campaigns (demo data)"
-    
-    return {
-        'amount': spend,
-        'detail': detail
-    }
+        return {
+            'amount': 0,
+            'detail': f'Ad spend database error: {str(e)}'
+        }
 
 # For local testing
 if __name__ == '__main__':
@@ -248,5 +204,5 @@ if __name__ == '__main__':
         'httpMethod': 'GET',
         'path': '/.netlify/functions/metrics/yesterday'
     }
-    result = handler(test_event, {})
+    result = lambda_handler(test_event, {})
     print(json.dumps(result, indent=2))
