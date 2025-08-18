@@ -68,8 +68,8 @@ def get_roofmaxx_deals_for_date(date_str):
     try:
         # Multiple possible paths for database
         db_paths = [
-            '/opt/build/repo/ui/data/roofmaxx/roofmaxx_deals.db',  # Netlify deployment
-            'data/roofmaxx/roofmaxx_deals.db',  # Local testing from ui/
+            '/opt/build/repo/data/roofmaxx/roofmaxx_deals.db',  # Netlify deployment
+            'data/roofmaxx/roofmaxx_deals.db',  # Local testing
             '../data/roofmaxx/roofmaxx_deals.db'  # Local testing relative
         ]
         
@@ -152,8 +152,8 @@ def get_google_ads_spend_for_date(date_str):
     try:
         # Multiple possible paths for database
         db_paths = [
-            '/opt/build/repo/ui/data/roofmaxx/roofmaxx_google_ads.db',  # Netlify deployment
-            'data/roofmaxx/roofmaxx_google_ads.db',  # Local testing from ui/
+            '/opt/build/repo/data/roofmaxx/roofmaxx_google_ads.db',  # Netlify deployment
+            'data/roofmaxx/roofmaxx_google_ads.db',  # Local testing
             '../data/roofmaxx/roofmaxx_google_ads.db'  # Local testing relative
         ]
         
