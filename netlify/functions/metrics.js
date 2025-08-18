@@ -28,6 +28,7 @@ exports.handler = async (event, context) => {
 
     // Try multiple possible paths for databases
     const possiblePaths = [
+      __dirname, // Same directory as the function
       path.join(process.cwd(), 'databases'),
       path.join('/var/task', 'databases'),
       path.join(__dirname, '..', '..', 'databases'),
