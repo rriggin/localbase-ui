@@ -6,6 +6,6 @@
     "build": "echo 'No build needed for static site'"
   },
   "dependencies": {
-    "better-sqlite3": "^8.7.0"
+    "sqlite3": "^5.1.6"
   }
 }

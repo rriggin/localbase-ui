@@ -1,5 +1,6 @@
-const Database = require('better-sqlite3');
+const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const { promisify } = require('util');
 
 exports.handler = async (event, context) => {
   // CORS headers
@@ -32,26 +33,44 @@ exports.handler = async (event, context) => {
     let leads = { count: 0, detail: 'Database not found', sources: [] };
     let adSpend = { amount: 0, detail: 'Database not found' };
 
+    // Helper to promisify database operations
+    const dbGet = (db, query, params) => {
+      return new Promise((resolve, reject) => {
+        db.get(query, params, (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        });
+      });
+    };
+
+    const dbAll = (db, query, params) => {
+      return new Promise((resolve, reject) => {
+        db.all(query, params, (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      });
+    };
+
     try {
       // Get leads data
-      const db = new Database(dbPath, { readonly: true });
-      const leadsQuery = db.prepare(`
+      const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY);
+      
+      const leadsRaw = await dbAll(db, `
         SELECT lead_source, raw_data
         FROM deals 
         WHERE DATE(created_at) = ?
-      `);
-      
-      const leadsRaw = leadsQuery.all(dateStr);
+      `, [dateStr]);
       
       // Count by source, extracting from raw_data if needed
       const sourceCounts = {};
-      for (const { lead_source, raw_data } of leadsRaw) {
-        let source = lead_source;
+      for (const row of leadsRaw) {
+        let source = row.lead_source;
         
         // Try to get dealtype from raw_data if lead_source is empty
-        if (!source && raw_data) {
+        if (!source && row.raw_data) {
           try {
-            const data = JSON.parse(raw_data);
+            const data = JSON.parse(row.raw_data);
             source = data.dealtype || 'Unknown';
           } catch (e) {
             source = 'Unknown';
@@ -85,14 +104,13 @@ exports.handler = async (event, context) => {
 
     try {
       // Get ad spend data
-      const adsDb = new Database(adsDbPath, { readonly: true });
-      const spendQuery = adsDb.prepare(`
+      const adsDb = new sqlite3.Database(adsDbPath, sqlite3.OPEN_READONLY);
+      
+      const result = await dbGet(adsDb, `
         SELECT SUM(cost) as total_cost, COUNT(*) as campaigns
         FROM google_ads_data 
         WHERE date = ?
-      `);
-      
-      const result = spendQuery.get(dateStr);
+      `, [dateStr]);
       
       adSpend = {
         amount: result?.total_cost || 0,
