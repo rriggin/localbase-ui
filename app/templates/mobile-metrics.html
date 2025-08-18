@@ -449,7 +449,7 @@
         function calculateCardWidth() {
             // For mobile or narrow screens, use full width
             if (window.innerWidth <= 768) {
-                cardWidth = window.innerWidth - 40 + 20; // card width + gap
+                cardWidth = window.innerWidth; // Full viewport width for mobile
             } else {
                 // For desktop, use consistent 420px (400px card + 20px gap)
                 cardWidth = 420;
@@ -459,6 +459,12 @@
         function updateCardPosition(animated = true) {
             calculateCardWidth();
             const offset = -currentIndex * cardWidth;
+            console.log('Mobile swipe debug:', {
+                currentIndex,
+                cardWidth,
+                offset,
+                windowWidth: window.innerWidth
+            });
             cardsWrapper.style.transition = animated ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none';
             cardsWrapper.style.transform = `translateX(${offset}px)`;
             
