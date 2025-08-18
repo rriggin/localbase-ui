@@ -455,8 +455,11 @@
                 return;
             }
 
-            // Sort data by count descending to ensure consistent ordering
-            const sortedData = [...rawData].sort((a, b) => b.count - a.count);
+            // Sort data by count descending, then alphabetically for consistent ordering
+            const sortedData = [...rawData].sort((a, b) => {
+                if (b.count !== a.count) return b.count - a.count;
+                return a.name.localeCompare(b.name);
+            });
             const colors = ['#5F8DFF', '#5DD6C7', '#FFB366', '#B794F6', '#FF6B6B', '#4ECDC4'];
 
             const chart = new Chart(ctx, {
