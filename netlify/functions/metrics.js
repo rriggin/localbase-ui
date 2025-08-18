@@ -30,7 +30,9 @@ exports.handler = async (event, context) => {
     const possiblePaths = [
       path.join(process.cwd(), 'data', 'roofmaxx'),
       path.join('/opt/build/repo', 'data', 'roofmaxx'),
-      path.join(__dirname, '..', '..', 'data', 'roofmaxx')
+      path.join(__dirname, '..', '..', 'data', 'roofmaxx'),
+      path.join('/var/task', 'data', 'roofmaxx'),
+      path.join('/tmp', 'data', 'roofmaxx')
     ];
     
     let dbDir = null;
@@ -45,6 +47,20 @@ exports.handler = async (event, context) => {
     console.log('Function dirname:', __dirname);
     console.log('Checked paths:', possiblePaths);
     console.log('Found db directory:', dbDir);
+    
+    // Debug: list actual directories that exist
+    try {
+      console.log('Contents of /var/task:', fs.readdirSync('/var/task'));
+      if (fs.existsSync('/var/task/data')) {
+        console.log('Contents of /var/task/data:', fs.readdirSync('/var/task/data'));
+      }
+      console.log('Contents of process.cwd():', fs.readdirSync(process.cwd()));
+      if (fs.existsSync(path.join(process.cwd(), 'data'))) {
+        console.log('Contents of process.cwd()/data:', fs.readdirSync(path.join(process.cwd(), 'data')));
+      }
+    } catch (e) {
+      console.log('Error listing directories:', e.message);
+    }
     
     let leads = { count: 0, detail: `Database directory not found. Checked: ${possiblePaths.join(', ')}`, sources: [] };
     let adSpend = { amount: 0, detail: 'Database directory not found' };
