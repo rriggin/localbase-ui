@@ -34,23 +34,29 @@
             background: var(--background-dark);
             color: var(--text-color);
             height: 100vh;
+            height: 100dvh; /* Dynamic viewport height for mobile */
             overflow: hidden;
+            overscroll-behavior: none; /* Prevent bounce scrolling */
             display: flex;
             flex-direction: column;
+            position: fixed; /* Prevent any scrolling */
+            width: 100%;
+            top: 0;
+            left: 0;
         }
 
         /* Header */
         .header {
-            padding: 20px;
+            padding: 16px 20px 12px;
             text-align: center;
             flex-shrink: 0;
         }
 
         .logo {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 700;
             color: var(--text-color);
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
         .logo .highlight {
@@ -58,13 +64,13 @@
         }
 
         .date-label {
-            font-size: 14px;
+            font-size: 13px;
             color: var(--secondary-text);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .date-value {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
             color: var(--text-color);
         }
@@ -75,6 +81,7 @@
             position: relative;
             overflow: hidden;
             padding: 0 20px;
+            min-height: 0; /* Allow flex shrinking */
         }
 
         .cards-wrapper {
@@ -188,7 +195,7 @@
             display: flex;
             justify-content: center;
             gap: 8px;
-            padding: 20px;
+            padding: 16px 20px;
             flex-shrink: 0;
         }
 
