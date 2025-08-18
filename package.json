@@ -4,5 +4,8 @@
   "description": "LocalBase UI and Netlify Functions",
   "scripts": {
     "build": "echo 'No build needed for static site'"
+  },
+  "dependencies": {
+    "better-sqlite3": "^8.7.0"
   }
 }

@@ -3,7 +3,7 @@ import sqlite3
 from datetime import datetime, timedelta
 import os
 
-def lambda_handler(event, context):
+def handler(event, context):
     """Netlify function to serve LocalBase metrics data"""
     
     # CORS headers
@@ -206,5 +206,5 @@ if __name__ == '__main__':
         'httpMethod': 'GET',
         'path': '/.netlify/functions/metrics/yesterday'
     }
-    result = lambda_handler(test_event, {})
+    result = handler(test_event, {})
     print(json.dumps(result, indent=2))
