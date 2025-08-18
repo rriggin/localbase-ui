@@ -74,7 +74,9 @@ def get_roofmaxx_deals_for_date(date_str):
         ]
         
         db_path = None
+        checked_paths = []
         for path in db_paths:
+            checked_paths.append(f"{path}: {os.path.exists(path)}")
             if os.path.exists(path):
                 db_path = path
                 break
@@ -82,7 +84,7 @@ def get_roofmaxx_deals_for_date(date_str):
         if not db_path:
             return {
                 'count': 0,
-                'detail': 'Database file not found',
+                'detail': f'Database not found. Checked: {", ".join(checked_paths)}',
                 'sources': []
             }
         
