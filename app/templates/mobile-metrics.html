@@ -496,7 +496,7 @@
                 }
             });
 
-            // Create interactive labels using the same sorted data
+            // Create interactive labels using the chart's actual data order
             createChartLabels(sortedData, colors, chart);
         }
 
@@ -504,11 +504,17 @@
         function createChartLabels(data, colors, chart) {
             const labelsContainer = document.getElementById('chartLabels');
             
-            const labelsHtml = data.map((item, index) => `
+            // Get the actual chart data order to ensure labels match segments
+            const chartLabels = chart.data.labels;
+            const chartData = chart.data.datasets[0].data;
+            const chartColors = chart.data.datasets[0].backgroundColor;
+            
+            // Create labels based on chart's actual order
+            const labelsHtml = chartLabels.map((label, index) => `
                 <div class="chart-label" data-index="${index}">
-                    <div class="label-color" style="background-color: ${colors[index]}"></div>
-                    <span class="label-text">${item.name}</span>
-                    <span class="label-count">${item.count}</span>
+                    <div class="label-color" style="background-color: ${chartColors[index]}"></div>
+                    <span class="label-text">${label}</span>
+                    <span class="label-count">${chartData[index]}</span>
                 </div>
             `).join('');
             
