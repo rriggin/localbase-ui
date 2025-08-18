@@ -24,13 +24,16 @@ def handler(event, context):
         }
     
     try:
-        path = event.get('path', '')
+        # Get path from event - could be in 'path' or 'rawPath' 
+        path = event.get('path', event.get('rawPath', ''))
+        query_params = event.get('queryStringParameters', {}) or {}
         
-        if path.endswith('/yesterday'):
-            date_str = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
-        else:
-            # Extract date from path if provided
-            date_str = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+        # Debug logging
+        print(f"Event path: {path}")
+        print(f"Event keys: {list(event.keys())}")
+        
+        # Always use yesterday for now (can be enhanced later)
+        date_str = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
         
         # Try to get real data first, fallback to demo data
         leads_data = get_deals_for_date(date_str)
