@@ -1,0 +1,25 @@
+{
+  "date": "2025-08-17",
+  "leads": {
+    "count": 2,
+    "detail": "Yesterday's total",
+    "sources": [
+      {
+        "code": "NAP-L",
+        "name": "NAP-L", 
+        "count": 1
+      },
+      {
+        "code": "MICRO",
+        "name": "MICRO",
+        "count": 1
+      }
+    ]
+  },
+  "adSpend": {
+    "amount": 28.5,
+    "detail": "Across 2 campaigns"
+  },
+  "errors": [],
+  "exportedAt": "2025-08-18T18:15:00.000Z"
+}
