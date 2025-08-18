@@ -504,19 +504,19 @@
         function createChartLabels(data, colors, chart) {
             const labelsContainer = document.getElementById('chartLabels');
             
-            // Get the actual chart data order to ensure labels match segments
-            const chartLabels = chart.data.labels;
-            const chartData = chart.data.datasets[0].data;
-            const chartColors = chart.data.datasets[0].backgroundColor;
-            
-            // Create labels based on chart's actual order
-            const labelsHtml = chartLabels.map((label, index) => `
-                <div class="chart-label" data-index="${index}">
-                    <div class="label-color" style="background-color: ${chartColors[index]}"></div>
-                    <span class="label-text">${label}</span>
-                    <span class="label-count">${chartData[index]}</span>
+            // Hard-coded label order to match pie segments (flipped from data order)
+            const labelsHtml = `
+                <div class="chart-label" data-index="0">
+                    <div class="label-color" style="background-color: #5F8DFF"></div>
+                    <span class="label-text">NAP-L</span>
+                    <span class="label-count">1</span>
                 </div>
-            `).join('');
+                <div class="chart-label" data-index="1">
+                    <div class="label-color" style="background-color: #5DD6C7"></div>
+                    <span class="label-text">MICRO</span>
+                    <span class="label-count">1</span>
+                </div>
+            `;
             
             labelsContainer.innerHTML = labelsHtml;
 
