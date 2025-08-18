@@ -1,0 +1,254 @@
+{% extends "chart_wrapper.html" %}
+
+{% block title %}RoofMaxx Deals by Type - LocalBase{% endblock %}
+
+{% block chart_data %}
+// Sample RoofMaxx data for demonstration
+const chartData = [
+    { dealtype: "New Installation", count: 1523 },
+    { dealtype: "Maintenance", count: 987 },
+    { dealtype: "Roof Repair", count: 654 },
+    { dealtype: "Consultation", count: 432 },
+    { dealtype: "Warranty", count: 298 },
+    { dealtype: "Emergency", count: 156 }
+];
+
+const chartConfig = {
+    title: "RoofMaxx Deals Distribution",
+    subtitle: "Breakdown by service type",
+    width: 600,
+    height: 400,
+    colors: {
+        scheme: "category10"
+    }
+};
+{% endblock %}
+
+{% block chart_script %}
+// RoofMaxx Pie Chart Implementation using LocalBase Chart Wrapper
+class RoofMaxxPieChart extends LocalBaseChart {
+    constructor() {
+        super('chartContent', {
+            width: 600,
+            height: 400,
+            margin: { top: 20, right: 20, bottom: 20, left: 20 }
+        });
+        
+        this.data = chartData;
+        this.render();
+    }
+    
+    render() {
+        this.showLoading();
+        
+        // Clear container
+        this.container.selectAll("*").remove();
+        
+        // Create SVG
+        const svg = this.container
+            .append("svg")
+            .attr("width", this.config.width)
+            .attr("height", this.config.height)
+            .attr("class", "chart-svg");
+        
+        const width = this.config.width;
+        const height = this.config.height;
+        const radius = Math.min(width, height) / 2 - 40;
+        
+        // Create main group
+        const g = svg.append("g")
+            .attr("transform", `translate(${width / 2}, ${height / 2})`);
+        
+        // Color scale using LocalBase colors
+        const color = d3.scaleOrdinal()
+            .domain(this.data.map(d => d.dealtype))
+            .range([
+                "var(--lb-blue)",
+                "var(--lb-green)",
+                "var(--lb-orange)", 
+                "var(--lb-purple)",
+                "var(--lb-blue-light)",
+                "var(--lb-green-light)"
+            ]);
+        
+        // Create pie layout
+        const pie = d3.pie()
+            .value(d => d.count)
+            .sort(null);
+        
+        // Create arc generator
+        const arc = d3.arc()
+            .innerRadius(0)
+            .outerRadius(radius);
+        
+        const labelArc = d3.arc()
+            .innerRadius(radius * 0.7)
+            .outerRadius(radius * 0.7);
+        
+        // Calculate total for percentages
+        const total = d3.sum(this.data, d => d.count);
+        
+        // Create pie slices
+        const arcs = g.selectAll(".arc")
+            .data(pie(this.data))
+            .enter()
+            .append("g")
+            .attr("class", "arc");
+        
+        // Add paths with animation
+        arcs.append("path")
+            .attr("d", arc)
+            .attr("fill", d => color(d.data.dealtype))
+            .attr("stroke", "var(--background-dark)")
+            .attr("stroke-width", 2)
+            .style("opacity", 0)
+            .on("mouseover", (event, d) => {
+                const percentage = ((d.data.count / total) * 100).toFixed(1);
+                this.showTooltip(
+                    `Count: ${d.data.count.toLocaleString()}<br/>Percentage: ${percentage}%`,
+                    d.data.dealtype
+                );
+                
+                // Highlight effect
+                d3.select(event.currentTarget)
+                    .transition()
+                    .duration(200)
+                    .style("opacity", 0.8)
+                    .attr("transform", function() {
+                        const centroid = arc.centroid(d);
+                        return `translate(${centroid[0] * 0.1}, ${centroid[1] * 0.1})`;
+                    });
+            })
+            .on("mousemove", (event) => {
+                this.tooltip
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 10) + "px");
+            })
+            .on("mouseout", (event) => {
+                this.hideTooltip();
+                d3.select(event.currentTarget)
+                    .transition()
+                    .duration(200)
+                    .style("opacity", 1)
+                    .attr("transform", "translate(0,0)");
+            })
+            .transition()
+            .duration(800)
+            .delay((d, i) => i * 100)
+            .style("opacity", 1)
+            .attrTween("d", function(d) {
+                const interpolate = d3.interpolate({startAngle: 0, endAngle: 0}, d);
+                return function(t) {
+                    return arc(interpolate(t));
+                };
+            });
+        
+        // Add labels for larger slices
+        arcs.append("text")
+            .attr("transform", d => {
+                const percentage = (d.data.count / total) * 100;
+                if (percentage < 5) return "translate(1000,1000)"; // Hide small labels
+                return `translate(${labelArc.centroid(d)})`;
+            })
+            .attr("text-anchor", "middle")
+            .attr("dy", "0.35em")
+            .style("fill", "var(--text-color)")
+            .style("font-size", "12px")
+            .style("font-weight", "600")
+            .style("opacity", 0)
+            .text(d => {
+                const percentage = (d.data.count / total) * 100;
+                return percentage >= 5 ? `${percentage.toFixed(1)}%` : "";
+            })
+            .transition()
+            .delay(800)
+            .duration(400)
+            .style("opacity", 1);
+        
+        // Update legend
+        this.updateLegend(this.data.map(d => ({
+            label: d.dealtype,
+            value: d.count.toLocaleString(),
+            color: color(d.dealtype)
+        })));
+        
+        // Update stats
+        this.updateStats({
+            "Total Deals": total.toLocaleString(),
+            "Deal Types": this.data.length,
+            "Top Category": this.data.reduce((max, d) => d.count > max.count ? d : max).dealtype,
+            "Average per Type": Math.round(total / this.data.length).toLocaleString()
+        });
+        
+        this.hideLoading();
+    }
+}
+
+// Refresh function for control button
+window.refreshChart = function() {
+    console.log('Refreshing RoofMaxx pie chart...');
+    if (window.roofmaxxChart) {
+        window.roofmaxxChart.render();
+    }
+};
+
+// Export function for control button
+window.exportChart = function() {
+    console.log('Exporting RoofMaxx pie chart...');
+    const svg = document.querySelector('.chart-svg');
+    if (svg) {
+        // Create download link for SVG
+        const svgData = new XMLSerializer().serializeToString(svg);
+        const svgBlob = new Blob([svgData], {type: "image/svg+xml;charset=utf-8"});
+        const svgUrl = URL.createObjectURL(svgBlob);
+        
+        const downloadLink = document.createElement("a");
+        downloadLink.href = svgUrl;
+        downloadLink.download = "roofmaxx-deals-chart.svg";
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(svgUrl);
+    }
+};
+
+// View change function for control dropdown
+window.changeChartView = function(view) {
+    console.log(`Changing chart view to: ${view}`);
+    // Implement different view modes if needed
+};
+
+// Initialize chart when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    window.roofmaxxChart = new RoofMaxxPieChart();
+});
+{% endblock %}
+
+{% block chart_controls %}
+<div class="control-group">
+    <span class="control-label">View</span>
+    <select class="control-select" id="chartViewSelect">
+        <option value="deals">By Deal Type</option>
+        <option value="revenue">By Revenue</option>
+        <option value="timeline">By Timeline</option>
+    </select>
+</div>
+<div class="control-group">
+    <span class="control-label">Period</span>
+    <select class="control-select" id="periodSelect">
+        <option value="month">This Month</option>
+        <option value="quarter">This Quarter</option>
+        <option value="year">This Year</option>
+    </select>
+</div>
+<div class="control-group">
+    <button class="control-button" id="refreshChart">
+        <i class="fas fa-sync-alt"></i>
+        Refresh
+    </button>
+    <button class="control-button secondary" id="exportChart">
+        <i class="fas fa-download"></i>
+        Export SVG
+    </button>
+</div>
+{% endblock %}

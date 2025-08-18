@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoofMaxx Data Explorer - LocalBase</title>
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --lb-blue: #5F8DFF;
+            --lb-blue-dark: #3A6FE3;
+            --lb-blue-light: #7BA4FF;
+            --lb-black: #1E1E2E;
+            --lb-gray-dark: #2A2A3C;
+            --lb-gray-medium: #383850;
+            --lb-gray-light: #4A4A65;
+            --lb-green: #5DD6C7;
+            --lb-orange: #FFB366;
+            --lb-purple: #B794F6;
+            --lb-white: #FFFFFF;
+            
+            --background-dark: var(--lb-black);
+            --text-color: var(--lb-white);
+            --secondary-text: #B8B8D0;
+            --border-color: #404060;
+            --primary-color: var(--lb-blue);
+            --primary-hover: var(--lb-blue-light);
+            --success-color: var(--lb-green);
+            --warning-color: var(--lb-orange);
+            --info-color: var(--lb-purple);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: var(--background-dark);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .header {
+            background-color: #252538;
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 0;
+        }
+
+        .header-content {
+            max-width: 95vw;
+            margin: 0 auto;
+            padding: 0 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        .logo .highlight {
+            color: var(--primary-color);
+        }
+
+        .main-container {
+            max-width: 98vw;
+            margin: 0 auto;
+            padding: 10px;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .section-subtitle {
+            color: var(--secondary-text);
+            font-size: 16px;
+        }
+
+
+
+        .table-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--lb-gray-medium);
+        }
+
+        .table-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .table-subtitle {
+            color: var(--secondary-text);
+            font-size: 14px;
+        }
+
+        .table-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            font-size: 12px;
+            color: var(--secondary-text);
+        }
+
+        .table-controls {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--lb-gray-medium);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .controls-left {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .controls-right {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--secondary-text);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .control-input, .control-select {
+            background-color: var(--lb-gray-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-color);
+            padding: 6px 10px;
+            font-size: 14px;
+        }
+
+        .control-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background-color: var(--primary-color);
+            color: var(--lb-white);
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .control-button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .control-button.secondary {
+            background-color: var(--lb-gray-dark);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+
+        .data-table th {
+            background-color: var(--lb-gray-medium);
+            color: var(--text-color);
+            font-weight: 600;
+            padding: 16px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .data-table th:hover {
+            background-color: var(--lb-gray-light);
+        }
+
+        .data-table th.sortable::after {
+            content: ' ↕';
+            opacity: 0.5;
+        }
+
+        .data-table td {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .data-table tbody tr:hover {
+            background-color: var(--lb-gray-medium);
+        }
+        
+        .table-scroll-area {
+            max-height: calc(100vh - 180px);
+            overflow-y: auto;
+            background-color: var(--lb-gray-dark);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .col-number, .col-currency {
+            text-align: right;
+            font-weight: 500;
+        }
+
+        .col-currency {
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
+        .col-date {
+            color: var(--secondary-text);
+        }
+
+        .col-status, .col-actions {
+            text-align: center;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-success {
+            background-color: rgba(93, 214, 199, 0.2);
+            color: var(--success-color);
+        }
+
+        .status-warning {
+            background-color: rgba(255, 179, 102, 0.2);
+            color: var(--warning-color);
+        }
+
+        .status-info {
+            background-color: rgba(183, 148, 246, 0.2);
+            color: var(--info-color);
+        }
+
+        .action-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background-color: var(--lb-gray-medium);
+            border: none;
+            border-radius: 4px;
+            color: var(--secondary-text);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0 2px;
+        }
+
+        .action-button:hover {
+            background-color: var(--lb-gray-light);
+            color: var(--text-color);
+        }
+
+        .action-button.primary {
+            background-color: var(--primary-color);
+            color: var(--lb-white);
+        }
+
+        .action-button.danger {
+            background-color: #F87171;
+            color: var(--lb-white);
+        }
+
+        .table-pagination {
+            padding: 16px 24px;
+            background-color: var(--lb-gray-medium);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pagination-info {
+            font-size: 14px;
+            color: var(--secondary-text);
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .pagination-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background-color: var(--lb-gray-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--secondary-text);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+
+        .pagination-button:hover:not(.disabled) {
+            background-color: var(--lb-gray-light);
+            color: var(--text-color);
+        }
+
+        .pagination-button.active {
+            background-color: var(--primary-color);
+            color: var(--lb-white);
+            border-color: var(--primary-color);
+        }
+
+        .pagination-button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .table-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .controls-left, .controls-right {
+                justify-content: space-between;
+                width: 100%;
+            }
+            
+            .data-table {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                Local<span class="highlight">Base</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+            <div class="table-controls">
+                <div class="controls-left">
+                    <div class="control-group">
+                        <span class="control-label">Search:</span>
+                        <input type="text" class="control-input" id="tableSearch" placeholder="Filter results...">
+                    </div>
+                    <div class="control-group">
+                        <span class="control-label">Show:</span>
+                        <select class="control-select" id="rowsPerPage">
+                            <option value="10">10 rows</option>
+                            <option value="25">25 rows</option>
+                            <option value="50">50 rows</option>
+                            <option value="100" selected>100 rows</option>
+                            <option value="all">ALL rows</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <span class="control-label">Stage:</span>
+                        <select class="control-select" id="statusFilter">
+                            <option value="">All Stages</option>
+                            <option value="962624">Stage 962624 (330 deals)</option>
+                            <option value="962653">Stage 962653 (273 deals)</option>
+                            <option value="962623">Stage 962623 (113 deals)</option>
+                            <option value="962654">Stage 962654 (68 deals)</option>
+                            <option value="2241388">Stage 2241388 (60 deals)</option>
+                            <option value="81330015">Stage 81330015 (20 deals)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="controls-right">
+                    <button class="control-button" id="refreshTable">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh
+                    </button>
+                    <button class="control-button secondary" id="exportTable">
+                        <i class="fas fa-download"></i>
+                        Export
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Record count display -->
+            <div style="padding: 8px 24px; background-color: var(--lb-gray-medium); border-bottom: 1px solid var(--border-color);">
+                <span id="recordCount" style="font-size: 12px; color: var(--secondary-text);">Loading records...</span>
+            </div>
+            
+            <div class="table-scroll-area" style="overflow-x: auto;">
+                <table class="data-table" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th class="sortable">Deal ID</th>
+                            <th class="sortable">Deal Name</th>
+                            <th class="sortable col-currency">Invoice Total</th>
+                            <th class="sortable col-date">Created Date</th>
+                            <th class="sortable">Customer</th>
+                            <th class="sortable">Location</th>
+                            <th class="col-status">Stage</th>
+                            <th class="col-actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Real data will be loaded here via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+    </main>
+
+    <!-- Load real RoofmaxxConnect data -->
+    <script src="roofmaxx_deals_data.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Search functionality
+            const searchInput = document.getElementById('tableSearch');
+            const statusFilter = document.getElementById('statusFilter');
+            const rowsPerPageSelect = document.getElementById('rowsPerPage');
+            let currentPage = 1;
+            let rowsPerPage = 100; // Default to 100
+            
+            function applyFilters() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const statusFilterValue = document.getElementById('statusFilter').value.toLowerCase();
+                const rows = document.querySelectorAll('#tableBody tr');
+                let visibleRows = [];
+                
+                // First, hide all rows
+                rows.forEach(row => {
+                    row.style.display = 'none';
+                });
+                
+                // Find rows that match filters
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    
+                    // For status filtering, check the dealstage data attribute
+                    const dealstage = row.getAttribute('data-dealstage') || '';
+                    
+                    const matchesSearch = text.includes(searchTerm);
+                    const matchesStatus = !statusFilterValue || dealstage === statusFilterValue;
+                    
+                    if (matchesSearch && matchesStatus) {
+                        visibleRows.push(row);
+                    }
+                });
+                
+                // Apply pagination to filtered results
+                applyPagination(visibleRows);
+                updatePaginationInfo(visibleRows.length);
+            }
+            
+            function applyPagination(visibleRows) {
+                // If "ALL" is selected, show all rows
+                if (rowsPerPage === 'all') {
+                    visibleRows.forEach(row => {
+                        row.style.display = '';
+                    });
+                    return;
+                }
+                
+                const startIndex = (currentPage - 1) * rowsPerPage;
+                const endIndex = startIndex + rowsPerPage;
+                
+                // Show only the rows for the current page
+                visibleRows.forEach((row, index) => {
+                    if (index >= startIndex && index < endIndex) {
+                        row.style.display = '';
+                    }
+                });
+            }
+            
+            function updatePaginationInfo(totalVisible) {
+                // Handle "ALL" case
+                if (rowsPerPage === 'all') {
+                    const recordCountElement = document.getElementById('recordCount');
+                    if (recordCountElement) {
+                        recordCountElement.textContent = `Showing all ${totalVisible} records`;
+                    }
+                    return;
+                }
+                
+                const startRecord = Math.min((currentPage - 1) * rowsPerPage + 1, totalVisible);
+                const endRecord = Math.min(currentPage * rowsPerPage, totalVisible);
+                const recordCountElement = document.getElementById('recordCount');
+                if (recordCountElement) {
+                    recordCountElement.textContent = `Showing ${startRecord}-${endRecord} of ${totalVisible} records`;
+                }
+            }
+            
+            // Event listeners
+            searchInput.addEventListener('input', applyFilters);
+            
+            statusFilter.addEventListener('change', function() {
+                currentPage = 1; // Reset to first page when filtering
+                applyFilters();
+            });
+            
+            rowsPerPageSelect.addEventListener('change', function() {
+                rowsPerPage = this.value === 'all' ? 'all' : parseInt(this.value);
+                currentPage = 1; // Reset to first page
+                applyFilters();
+            });
+            
+            // Function to load real RoofmaxxConnect deals data
+            function loadRealDealsData() {
+                try {
+                    console.log('Loading real RoofmaxxConnect deals data...');
+                    
+                    // Use the real data from the JavaScript file
+                    if (typeof ROOFMAXX_DEALS_DATA === 'undefined') {
+                        console.error('ROOFMAXX_DEALS_DATA not found! Using sample data.');
+                        return;
+                    }
+                    
+                    const tableBody = document.getElementById('tableBody');
+                    
+                    // Clear existing sample data
+                    tableBody.innerHTML = '';
+                    
+                    // Add all real data rows
+                    ROOFMAXX_DEALS_DATA.forEach((deal, index) => {
+                        const row = document.createElement('tr');
+                        
+                        // Format the location
+                        let location = '';
+                        if (deal.city && deal.state) {
+                            location = `${deal.city}, ${deal.state}`;
+                            if (deal.zip_code) {
+                                location += ` ${deal.zip_code}`;
+                            }
+                        } else if (deal.address) {
+                            location = deal.address;
+                        }
+                        
+                        // Format the date
+                        let formattedDate = deal.created_at;
+                        if (deal.created_at && !isNaN(Date.parse(deal.created_at))) {
+                            const date = new Date(parseInt(deal.created_at));
+                            formattedDate = date.toISOString().split('T')[0];
+                        }
+                        
+                        // Determine status color
+                        let statusClass = 'status-info';
+                        const stage = (deal.stage_label || '').toLowerCase();
+                        if (stage.includes('accepted') || stage.includes('active')) {
+                            statusClass = 'status-success';
+                        } else if (stage.includes('pending') || stage.includes('lead')) {
+                            statusClass = 'status-warning';
+                        }
+                        
+                        // Set data attribute for filtering
+                        row.setAttribute('data-dealstage', deal.dealstage || '');
+                        
+                        row.innerHTML = `
+                            <td class="col-number">${deal.deal_id || ''}</td>
+                            <td>${deal.deal_name || 'N/A'}</td>
+                            <td class="col-currency">${deal.invoice_total || '$0.00'}</td>
+                            <td class="col-date">${formattedDate || ''}</td>
+                            <td>${deal.customer_name || 'N/A'}</td>
+                            <td>${location || 'N/A'}</td>
+                            <td class="col-status">
+                                <span class="status-badge ${statusClass}">
+                                    <i class="fas fa-circle"></i>
+                                    Stage ${deal.dealstage || 'Unknown'}
+                                </span>
+                            </td>
+                            <td class="col-actions">
+                                <button class="action-button primary" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="action-button" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-button danger" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                    
+                    console.log(`✅ Loaded ${ROOFMAXX_DEALS_DATA.length} real deals from RoofmaxxConnect`);
+                    
+                    // Apply filters after data is loaded
+                    applyFilters();
+                    
+                } catch (error) {
+                    console.error('Error loading real deals data:', error);
+                }
+            }
+            
+            // Load real deals data
+            loadRealDealsData();
+
+            // Refresh button
+            document.getElementById('refreshTable').addEventListener('click', function() {
+                const icon = this.querySelector('i');
+                icon.classList.add('fa-spin');
+                setTimeout(() => {
+                    icon.classList.remove('fa-spin');
+                }, 1000);
+            });
+
+            // Export button
+            document.getElementById('exportTable').addEventListener('click', function() {
+                alert('Export functionality would download CSV/Excel file');
+            });
+
+            // Table sorting
+            document.querySelectorAll('.sortable').forEach(header => {
+                header.addEventListener('click', function() {
+                    alert('Sorting by: ' + this.textContent);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

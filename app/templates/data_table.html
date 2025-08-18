@@ -1,0 +1,912 @@
+{% extends "base.html" %}
+
+{% block title %}{{ table_title | default("Data Table") }} - LocalBase{% endblock %}
+
+{% block styles %}
+/* Data Table specific styles */
+.table-container {
+    background-color: var(--lb-gray-dark);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.table-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--lb-gray-medium);
+}
+
+.table-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 4px;
+}
+
+.table-subtitle {
+    color: var(--secondary-text);
+    font-size: 14px;
+}
+
+.table-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--secondary-text);
+}
+
+/* Table Controls */
+.table-controls {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--lb-gray-medium);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.controls-left {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.controls-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.control-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--secondary-text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.control-input {
+    background-color: var(--lb-gray-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color);
+    padding: 6px 10px;
+    font-size: 14px;
+    min-width: 120px;
+}
+
+.control-select {
+    background-color: var(--lb-gray-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color);
+    padding: 6px 10px;
+    font-size: 14px;
+    min-width: 100px;
+}
+
+.control-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background-color: var(--primary-color);
+    color: var(--lb-white);
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+.control-button:hover {
+    background-color: var(--primary-hover);
+}
+
+.control-button.secondary {
+    background-color: var(--lb-gray-dark);
+}
+
+.control-button.secondary:hover {
+    background-color: var(--lb-gray-light);
+}
+
+/* Table Styles */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.data-table th {
+    background-color: var(--lb-gray-medium);
+    color: var(--text-color);
+    font-weight: 600;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    user-select: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.data-table th:hover {
+    background-color: var(--lb-gray-light);
+}
+
+.data-table th.sortable {
+    position: relative;
+    padding-right: 30px;
+}
+
+.data-table th.sortable::after {
+    content: '\f0dc';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.data-table th.sortable:hover::after {
+    opacity: 1;
+}
+
+.data-table th.sort-asc::after {
+    content: '\f0de';
+    opacity: 1;
+    color: var(--primary-color);
+}
+
+.data-table th.sort-desc::after {
+    content: '\f0dd';
+    opacity: 1;
+    color: var(--primary-color);
+}
+
+.data-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-color);
+    vertical-align: middle;
+}
+
+.data-table tbody tr {
+    transition: background-color 0.2s;
+}
+
+.data-table tbody tr:hover {
+    background-color: var(--lb-gray-medium);
+}
+
+.data-table tbody tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.data-table tbody tr:nth-child(even):hover {
+    background-color: var(--lb-gray-medium);
+}
+
+/* Column Types */
+.col-number {
+    text-align: right;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+
+.col-currency {
+    text-align: right;
+    font-weight: 600;
+    color: var(--success-color);
+    font-variant-numeric: tabular-nums;
+}
+
+.col-percentage {
+    text-align: right;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+
+.col-date {
+    color: var(--secondary-text);
+    font-variant-numeric: tabular-nums;
+}
+
+.col-status {
+    text-align: center;
+}
+
+.col-actions {
+    text-align: center;
+    width: 120px;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-success {
+    background-color: rgba(93, 214, 199, 0.2);
+    color: var(--success-color);
+}
+
+.status-warning {
+    background-color: rgba(255, 179, 102, 0.2);
+    color: var(--warning-color);
+}
+
+.status-error {
+    background-color: rgba(248, 113, 113, 0.2);
+    color: #F87171;
+}
+
+.status-info {
+    background-color: rgba(183, 148, 246, 0.2);
+    color: var(--info-color);
+}
+
+.status-neutral {
+    background-color: rgba(184, 184, 208, 0.2);
+    color: var(--secondary-text);
+}
+
+/* Action Buttons */
+.action-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background-color: var(--lb-gray-medium);
+    border: none;
+    border-radius: 4px;
+    color: var(--secondary-text);
+    cursor: pointer;
+    transition: all 0.2s;
+    margin: 0 2px;
+}
+
+.action-button:hover {
+    background-color: var(--lb-gray-light);
+    color: var(--text-color);
+}
+
+.action-button.primary {
+    background-color: var(--primary-color);
+    color: var(--lb-white);
+}
+
+.action-button.primary:hover {
+    background-color: var(--primary-hover);
+}
+
+.action-button.danger {
+    background-color: #F87171;
+    color: var(--lb-white);
+}
+
+.action-button.danger:hover {
+    background-color: #EF4444;
+}
+
+/* Pagination */
+.table-pagination {
+    padding: 16px 24px;
+    background-color: var(--lb-gray-medium);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border-color);
+}
+
+.pagination-info {
+    font-size: 14px;
+    color: var(--secondary-text);
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.pagination-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background-color: var(--lb-gray-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--secondary-text);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 12px;
+}
+
+.pagination-button:hover:not(.disabled) {
+    background-color: var(--lb-gray-light);
+    color: var(--text-color);
+}
+
+.pagination-button.active {
+    background-color: var(--primary-color);
+    color: var(--lb-white);
+    border-color: var(--primary-color);
+}
+
+.pagination-button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Empty State */
+.table-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--secondary-text);
+}
+
+.empty-icon {
+    font-size: 48px;
+    color: var(--border-color);
+    margin-bottom: 16px;
+}
+
+.empty-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text-color);
+    margin-bottom: 8px;
+}
+
+.empty-subtitle {
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+/* Loading State */
+.table-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: var(--secondary-text);
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-color);
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .table-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    
+    .controls-left, .controls-right {
+        justify-content: space-between;
+        width: 100%;
+    }
+    
+    .data-table {
+        font-size: 12px;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 8px 12px;
+    }
+    
+    .table-pagination {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .table-container {
+        margin: 0 -10px;
+        border-radius: 0;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 6px 8px;
+    }
+    
+    .col-actions {
+        width: 80px;
+    }
+    
+    .action-button {
+        width: 24px;
+        height: 24px;
+    }
+}
+{% endblock %}
+
+{% block content %}
+<div class="content-section">
+    <div class="section-header text-center">
+        <h1 class="section-title">{{ page_title | default("Data Explorer") }}</h1>
+        <p class="section-subtitle">{{ page_subtitle | default("Browse and analyze your data") }}</p>
+    </div>
+    
+    <div class="table-container">
+        <div class="table-header">
+            <h2 class="table-title">{{ table_title | default("Data Table") }}</h2>
+            <p class="table-subtitle">{{ table_subtitle | default("Query results and data analysis") }}</p>
+            <div class="table-meta">
+                <span>{{ total_records | default("1,247") }} records</span>
+                <span>Updated {{ last_updated | default("2 minutes ago") }}</span>
+            </div>
+        </div>
+        
+        {% if show_controls | default(true) %}
+        <div class="table-controls">
+            <div class="controls-left">
+                <div class="control-group">
+                    <span class="control-label">Search:</span>
+                    <input type="text" class="control-input" id="tableSearch" placeholder="Filter results...">
+                </div>
+                <div class="control-group">
+                    <span class="control-label">Show:</span>
+                    <select class="control-select" id="rowsPerPage">
+                        <option value="10">10 rows</option>
+                        <option value="25" selected>25 rows</option>
+                        <option value="50">50 rows</option>
+                        <option value="100">100 rows</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <span class="control-label">Filter:</span>
+                    <select class="control-select" id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="pending">Pending</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+            </div>
+            <div class="controls-right">
+                <button class="control-button" id="refreshTable">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+                <button class="control-button secondary" id="exportTable">
+                    <i class="fas fa-download"></i>
+                    Export
+                </button>
+                <button class="control-button secondary" id="columnSettings">
+                    <i class="fas fa-columns"></i>
+                    Columns
+                </button>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div style="overflow-x: auto;">
+            {% block table_content %}
+            <table class="data-table" id="dataTable">
+                <thead>
+                    {% block table_header %}
+                    <tr>
+                        <th class="sortable" data-column="id">
+                            ID
+                        </th>
+                        <th class="sortable" data-column="deal_type">
+                            Deal Type
+                        </th>
+                        <th class="sortable col-currency" data-column="amount">
+                            Amount
+                        </th>
+                        <th class="sortable col-date" data-column="date">
+                            Date
+                        </th>
+                        <th class="sortable" data-column="customer">
+                            Customer
+                        </th>
+                        <th class="col-status">
+                            Status
+                        </th>
+                        <th class="col-actions">
+                            Actions
+                        </th>
+                    </tr>
+                    {% endblock %}
+                </thead>
+                <tbody id="tableBody">
+                    {% block table_body %}
+                    <!-- Sample Data - Replace with actual data -->
+                    {% for i in range(25) %}
+                    <tr>
+                        <td class="col-number">{{ 1000 + i }}</td>
+                        <td>
+                            {% set deal_types = ["New Installation", "Maintenance", "Upgrade", "Consultation"] %}
+                            {{ deal_types[i % 4] }}
+                        </td>
+                        <td class="col-currency">${{ "{:,}".format((5000 + i * 500)) }}</td>
+                        <td class="col-date">{{ "2024-01-" + ((i % 28) + 1) | string | lpad(2, "0") }}</td>
+                        <td>Customer {{ i + 1 }}</td>
+                        <td class="col-status">
+                            {% set statuses = [
+                                ("Active", "success"),
+                                ("Pending", "warning"), 
+                                ("Completed", "info"),
+                                ("On Hold", "neutral")
+                            ] %}
+                            {% set status_info = statuses[i % 4] %}
+                            <span class="status-badge status-{{ status_info[1] }}">
+                                <i class="fas fa-circle"></i>
+                                {{ status_info[0] }}
+                            </span>
+                        </td>
+                        <td class="col-actions">
+                            <button class="action-button primary" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="action-button" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-button danger" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% endblock %}
+                </tbody>
+            </table>
+            {% endblock %}
+        </div>
+        
+        {% if show_pagination | default(true) %}
+        <div class="table-pagination">
+            <div class="pagination-info">
+                Showing <strong>1-25</strong> of <strong>{{ total_records | default("1,247") }}</strong> records
+            </div>
+            <div class="pagination-controls">
+                <button class="pagination-button disabled" id="firstPage">
+                    <i class="fas fa-angle-double-left"></i>
+                </button>
+                <button class="pagination-button disabled" id="prevPage">
+                    <i class="fas fa-angle-left"></i>
+                </button>
+                <button class="pagination-button active">1</button>
+                <button class="pagination-button">2</button>
+                <button class="pagination-button">3</button>
+                <span style="color: var(--secondary-text); margin: 0 8px;">...</span>
+                <button class="pagination-button">50</button>
+                <button class="pagination-button" id="nextPage">
+                    <i class="fas fa-angle-right"></i>
+                </button>
+                <button class="pagination-button" id="lastPage">
+                    <i class="fas fa-angle-double-right"></i>
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Data Table functionality
+class LocalBaseDataTable {
+    constructor(tableId, options = {}) {
+        this.table = document.getElementById(tableId);
+        this.options = {
+            sortable: true,
+            searchable: true,
+            paginated: true,
+            rowsPerPage: 25,
+            ...options
+        };
+        this.currentSort = { column: null, direction: null };
+        this.currentPage = 1;
+        this.filteredData = [];
+        this.originalData = [];
+        
+        this.init();
+    }
+    
+    init() {
+        this.setupSorting();
+        this.setupSearch();
+        this.setupControls();
+        this.setupPagination();
+        this.extractData();
+    }
+    
+    extractData() {
+        // Extract data from table for client-side operations
+        const tbody = this.table.querySelector('tbody');
+        const rows = tbody.querySelectorAll('tr');
+        
+        this.originalData = Array.from(rows).map(row => {
+            const cells = row.querySelectorAll('td');
+            return {
+                element: row,
+                data: Array.from(cells).map(cell => cell.textContent.trim())
+            };
+        });
+        
+        this.filteredData = [...this.originalData];
+    }
+    
+    setupSorting() {
+        if (!this.options.sortable) return;
+        
+        const headers = this.table.querySelectorAll('th.sortable');
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const column = header.dataset.column;
+                const columnIndex = Array.from(header.parentNode.children).indexOf(header);
+                this.sortByColumn(columnIndex, column);
+            });
+        });
+    }
+    
+    sortByColumn(columnIndex, columnName) {
+        const header = this.table.querySelector(`th[data-column="${columnName}"]`);
+        
+        // Determine sort direction
+        let direction = 'asc';
+        if (this.currentSort.column === columnName) {
+            direction = this.currentSort.direction === 'asc' ? 'desc' : 'asc';
+        }
+        
+        // Update sort indicators
+        this.table.querySelectorAll('th').forEach(h => {
+            h.classList.remove('sort-asc', 'sort-desc');
+        });
+        header.classList.add(`sort-${direction}`);
+        
+        // Sort data
+        this.filteredData.sort((a, b) => {
+            const aVal = a.data[columnIndex];
+            const bVal = b.data[columnIndex];
+            
+            // Handle numbers and currency
+            const aNum = parseFloat(aVal.replace(/[$,]/g, ''));
+            const bNum = parseFloat(bVal.replace(/[$,]/g, ''));
+            
+            if (!isNaN(aNum) && !isNaN(bNum)) {
+                return direction === 'asc' ? aNum - bNum : bNum - aNum;
+            }
+            
+            // Handle text
+            const comparison = aVal.localeCompare(bVal);
+            return direction === 'asc' ? comparison : -comparison;
+        });
+        
+        this.currentSort = { column: columnName, direction };
+        this.renderTable();
+    }
+    
+    setupSearch() {
+        if (!this.options.searchable) return;
+        
+        const searchInput = document.getElementById('tableSearch');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.filterData(e.target.value);
+            });
+        }
+    }
+    
+    filterData(searchTerm) {
+        const term = searchTerm.toLowerCase();
+        
+        if (!term) {
+            this.filteredData = [...this.originalData];
+        } else {
+            this.filteredData = this.originalData.filter(row => {
+                return row.data.some(cell => 
+                    cell.toLowerCase().includes(term)
+                );
+            });
+        }
+        
+        this.currentPage = 1;
+        this.renderTable();
+        this.updatePagination();
+    }
+    
+    setupControls() {
+        // Refresh button
+        const refreshBtn = document.getElementById('refreshTable');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => this.refresh());
+        }
+        
+        // Export button
+        const exportBtn = document.getElementById('exportTable');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => this.export());
+        }
+        
+        // Rows per page
+        const rowsSelect = document.getElementById('rowsPerPage');
+        if (rowsSelect) {
+            rowsSelect.addEventListener('change', (e) => {
+                this.options.rowsPerPage = parseInt(e.target.value);
+                this.currentPage = 1;
+                this.renderTable();
+                this.updatePagination();
+            });
+        }
+    }
+    
+    setupPagination() {
+        if (!this.options.paginated) return;
+        
+        const prevBtn = document.getElementById('prevPage');
+        const nextBtn = document.getElementById('nextPage');
+        const firstBtn = document.getElementById('firstPage');
+        const lastBtn = document.getElementById('lastPage');
+        
+        if (prevBtn) prevBtn.addEventListener('click', () => this.previousPage());
+        if (nextBtn) nextBtn.addEventListener('click', () => this.nextPage());
+        if (firstBtn) firstBtn.addEventListener('click', () => this.goToPage(1));
+        if (lastBtn) lastBtn.addEventListener('click', () => this.goToPage(this.getTotalPages()));
+    }
+    
+    renderTable() {
+        const tbody = this.table.querySelector('tbody');
+        const start = (this.currentPage - 1) * this.options.rowsPerPage;
+        const end = start + this.options.rowsPerPage;
+        const pageData = this.filteredData.slice(start, end);
+        
+        // Hide all rows
+        this.originalData.forEach(row => {
+            row.element.style.display = 'none';
+        });
+        
+        // Show current page rows
+        pageData.forEach(row => {
+            row.element.style.display = '';
+        });
+        
+        this.updatePagination();
+    }
+    
+    updatePagination() {
+        const totalRecords = this.filteredData.length;
+        const totalPages = this.getTotalPages();
+        const start = (this.currentPage - 1) * this.options.rowsPerPage + 1;
+        const end = Math.min(this.currentPage * this.options.rowsPerPage, totalRecords);
+        
+        // Update pagination info
+        const paginationInfo = document.querySelector('.pagination-info');
+        if (paginationInfo) {
+            paginationInfo.innerHTML = `
+                Showing <strong>${start}-${end}</strong> of <strong>${totalRecords}</strong> records
+            `;
+        }
+        
+        // Update button states
+        const prevBtn = document.getElementById('prevPage');
+        const nextBtn = document.getElementById('nextPage');
+        const firstBtn = document.getElementById('firstPage');
+        const lastBtn = document.getElementById('lastPage');
+        
+        if (prevBtn && firstBtn) {
+            const disabled = this.currentPage === 1;
+            prevBtn.classList.toggle('disabled', disabled);
+            firstBtn.classList.toggle('disabled', disabled);
+        }
+        
+        if (nextBtn && lastBtn) {
+            const disabled = this.currentPage === totalPages;
+            nextBtn.classList.toggle('disabled', disabled);
+            lastBtn.classList.toggle('disabled', disabled);
+        }
+    }
+    
+    getTotalPages() {
+        return Math.ceil(this.filteredData.length / this.options.rowsPerPage);
+    }
+    
+    previousPage() {
+        if (this.currentPage > 1) {
+            this.currentPage--;
+            this.renderTable();
+        }
+    }
+    
+    nextPage() {
+        if (this.currentPage < this.getTotalPages()) {
+            this.currentPage++;
+            this.renderTable();
+        }
+    }
+    
+    goToPage(page) {
+        const totalPages = this.getTotalPages();
+        if (page >= 1 && page <= totalPages) {
+            this.currentPage = page;
+            this.renderTable();
+        }
+    }
+    
+    refresh() {
+        console.log('Refreshing table data...');
+        // Implement refresh logic
+        const refreshBtn = document.getElementById('refreshTable');
+        if (refreshBtn) {
+            const icon = refreshBtn.querySelector('i');
+            icon.classList.add('fa-spin');
+            setTimeout(() => {
+                icon.classList.remove('fa-spin');
+            }, 1000);
+        }
+    }
+    
+    export() {
+        console.log('Exporting table data...');
+        // Implement export logic
+        alert('Export functionality would be implemented here');
+    }
+}
+
+// Initialize data table when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    window.dataTable = new LocalBaseDataTable('dataTable');
+});
+
+{% block table_scripts %}
+// Custom table scripts can be added here
+{% endblock %}
+</script>
+{% endblock %}

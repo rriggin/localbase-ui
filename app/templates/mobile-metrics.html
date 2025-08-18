@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Yesterday's Metrics</title>
+    
+    <!-- LocalBase CSS -->
+    <link rel="stylesheet" href="../../public/css/styles.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* Mobile Metrics Override Styles - Using LocalBase CSS Variables */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background-dark);
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            padding: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 16px;
+        }
+
+        .logo .highlight {
+            color: var(--tide-blue);
+        }
+
+        .date-label {
+            font-size: 14px;
+            color: var(--secondary-text);
+            margin-bottom: 8px;
+        }
+
+        .date-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        /* Card Container */
+        .cards-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            padding: 0 20px;
+        }
+
+        .cards-wrapper {
+            display: flex;
+            transition: transform 0.3s ease;
+            height: 100%;
+            gap: 20px;
+            cursor: grab;
+        }
+
+        .cards-wrapper:active {
+            cursor: grabbing;
+        }
+
+        /* Metric Card */
+        .metric-card {
+            min-width: calc(100vw - 40px);
+            background: var(--background-sidebar);
+            border-radius: 20px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 30px;
+        }
+
+        .card-icon.leads {
+            background: rgba(93, 214, 199, 0.2);
+            color: var(--tide-green);
+        }
+
+        .card-icon.spend {
+            background: rgba(95, 141, 255, 0.2);
+            color: var(--tide-blue);
+        }
+
+        .card-icon.sources {
+            background: rgba(255, 179, 102, 0.2);
+            color: #FFB366;
+        }
+
+        .card-title {
+            font-size: 16px;
+            color: var(--secondary-text);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card-value {
+            font-size: 56px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 20px;
+            line-height: 1;
+        }
+
+        .card-subtitle {
+            font-size: 14px;
+            color: var(--secondary-text);
+            margin-bottom: 30px;
+        }
+
+        /* Source List */
+        .source-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .source-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+        }
+
+        .source-name {
+            font-size: 16px;
+            color: var(--text-color);
+        }
+
+        .source-count {
+            font-size: 24px;
+            font-weight: 700;
+            color: #FFB366;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            height: 250px;
+            margin-top: 20px;
+        }
+
+        /* Dots Indicator */
+        .dots-container {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 20px;
+            flex-shrink: 0;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-color);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .dot.active {
+            width: 24px;
+            border-radius: 4px;
+            background: var(--tide-blue);
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--secondary-text);
+        }
+
+        .loading i {
+            font-size: 32px;
+            margin-bottom: 16px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Touch feedback */
+        .metric-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .metric-card:active {
+            transform: scale(0.98);
+        }
+
+        /* Responsive for larger screens */
+        @media (min-width: 768px) {
+            .cards-container {
+                max-width: 420px; /* Match card width exactly */
+                margin: 0 auto;
+                padding: 0;
+                display: flex;
+                justify-content: center;
+            }
+
+            .cards-wrapper {
+                width: 420px; /* Exact width to prevent overflow */
+            }
+
+            .metric-card {
+                min-width: 400px;
+                max-width: 400px;
+                flex-shrink: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            Local<span class="highlight">BASE</span>
+        </div>
+        <div class="date-label">YESTERDAY'S METRICS</div>
+        <div class="date-value" id="yesterdayDate">Loading...</div>
+    </div>
+
+    <!-- Cards Container -->
+    <div class="cards-container">
+        <div class="cards-wrapper" id="cardsWrapper">
+            <!-- Card 1: New Leads -->
+            <div class="metric-card">
+                <div class="card-icon leads">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="card-title">New Leads</div>
+                <div class="card-value" id="leadsCount">-</div>
+                <div class="card-subtitle" id="leadsDetail">Loading data...</div>
+            </div>
+
+            <!-- Card 2: Ad Spend -->
+            <div class="metric-card">
+                <div class="card-icon spend">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="card-title">Ad Spend</div>
+                <div class="card-value" id="adSpendValue">-</div>
+                <div class="card-subtitle" id="spendDetail">Loading data...</div>
+            </div>
+
+            <!-- Card 3: Leads by Source -->
+            <div class="metric-card">
+                <div class="card-icon sources">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div class="card-title">Leads by Source</div>
+                <div class="source-list" id="sourcesList">
+                    <div class="loading">
+                        <i class="fas fa-spinner"></i>
+                        <span>Loading sources...</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="sourcesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dots Indicator -->
+    <div class="dots-container">
+        <div class="dot active" data-index="0"></div>
+        <div class="dot" data-index="1"></div>
+        <div class="dot" data-index="2"></div>
+    </div>
+
+    <script>
+        // Get yesterday's date
+        function getYesterdayDate() {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            return yesterday;
+        }
+
+        // Format date for display
+        function formatDateDisplay(date) {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
+        }
+
+        // Format date for API (YYYY-MM-DD)
+        function formatDateAPI(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Initialize date
+        const yesterday = getYesterdayDate();
+        document.getElementById('yesterdayDate').textContent = formatDateDisplay(yesterday);
+
+        // Data will be loaded from API
+        let yesterdayData = {
+            leads: 0,
+            leadsDetail: "Loading...",
+            adSpend: 0,
+            spendDetail: "Loading...",
+            sources: []
+        };
+
+        // Load data from API
+        async function loadData() {
+            try {
+                // Fetch real data from API
+                await fetchYesterdayData();
+                
+                // Update leads card
+                document.getElementById('leadsCount').textContent = yesterdayData.leads;
+                document.getElementById('leadsDetail').textContent = yesterdayData.leadsDetail;
+
+                // Update ad spend card  
+                document.getElementById('adSpendValue').textContent = `$${yesterdayData.adSpend.toFixed(2)}`;
+                document.getElementById('spendDetail').textContent = yesterdayData.spendDetail;
+
+                // Update sources list
+                const sourcesList = document.getElementById('sourcesList');
+                const sourcesHtml = yesterdayData.sources
+                    .filter(s => s.count > 0)
+                    .map(source => `
+                        <div class="source-item">
+                            <div class="source-name">${source.name}</div>
+                            <div class="source-count">${source.count}</div>
+                        </div>
+                    `).join('');
+                
+                sourcesList.innerHTML = sourcesHtml || '<div style="text-align: center; color: var(--secondary-text);">No leads yesterday</div>';
+
+                // Initialize pie chart
+                setTimeout(() => {
+                    initSourcesChart();
+                }, 100);
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                
+                // Show error state
+                document.getElementById('leadsCount').textContent = '?';
+                document.getElementById('leadsDetail').textContent = 'Error loading data';
+                document.getElementById('adSpendValue').textContent = '?';
+                document.getElementById('spendDetail').textContent = 'Error loading data';
+                document.getElementById('sourcesList').innerHTML = '<div style="text-align: center; color: var(--secondary-text);">Error loading sources</div>';
+            }
+        }
+
+        // Initialize sources chart
+        function initSourcesChart() {
+            const ctx = document.getElementById('sourcesChart').getContext('2d');
+            const data = yesterdayData.sources.filter(s => s.count > 0);
+            
+            if (data.length === 0) {
+                ctx.font = '14px Inter';
+                ctx.fillStyle = '#B8B8D0';
+                ctx.textAlign = 'center';
+                ctx.fillText('No data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
+            }
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.map(s => s.name),
+                    datasets: [{
+                        data: data.map(s => s.count),
+                        backgroundColor: ['var(--tide-blue)', 'var(--tide-green)', '#FFB366', '#B794F6'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Navigation functionality
+        let currentIndex = 0;
+        let startX = 0;
+        let currentX = 0;
+        let isDragging = false;
+        let cardWidth = 0;
+        const cardsWrapper = document.getElementById('cardsWrapper');
+        const dots = document.querySelectorAll('.dot');
+        const totalCards = 3;
+
+        function calculateCardWidth() {
+            // For mobile or narrow screens, use full width
+            if (window.innerWidth <= 768) {
+                cardWidth = window.innerWidth - 40 + 20; // card width + gap
+            } else {
+                // For desktop, use consistent 420px (400px card + 20px gap)
+                cardWidth = 420;
+            }
+        }
+
+        function updateCardPosition(animated = true) {
+            calculateCardWidth();
+            const offset = -currentIndex * cardWidth;
+            cardsWrapper.style.transition = animated ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none';
+            cardsWrapper.style.transform = `translateX(${offset}px)`;
+            
+            // Update dots
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentIndex);
+            });
+        }
+
+        function goToCard(index) {
+            if (index >= 0 && index < totalCards) {
+                currentIndex = index;
+                updateCardPosition();
+            }
+        }
+
+        function nextCard() {
+            if (currentIndex < totalCards - 1) {
+                currentIndex++;
+                updateCardPosition();
+            }
+        }
+
+        function prevCard() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateCardPosition();
+            }
+        }
+
+        // Unified pointer events (works for touch, mouse, and trackpad)
+        let pointerStartX = 0;
+        let pointerCurrentX = 0;
+        let isPointerDown = false;
+        let pointerId = null;
+
+        function handlePointerStart(e) {
+            // Only handle primary pointer (first touch or mouse)
+            if (pointerId !== null) return;
+            
+            pointerStartX = e.clientX || e.touches[0].clientX;
+            pointerCurrentX = pointerStartX;
+            isPointerDown = true;
+            isDragging = true;
+            pointerId = e.pointerId || 'touch';
+            
+            cardsWrapper.style.transition = 'none';
+            cardsWrapper.style.cursor = 'grabbing';
+            
+            // Prevent default only for touch to avoid conflicts
+            if (e.type === 'touchstart') {
+                e.preventDefault();
+            }
+        }
+
+        function handlePointerMove(e) {
+            if (!isPointerDown || !isDragging) return;
+            
+            pointerCurrentX = e.clientX || e.touches[0].clientX;
+            const diff = pointerCurrentX - pointerStartX;
+            const offset = -currentIndex * cardWidth + diff;
+            
+            cardsWrapper.style.transform = `translateX(${offset}px)`;
+            
+            // Prevent default scrolling on touch
+            if (e.type === 'touchmove' && Math.abs(diff) > 10) {
+                e.preventDefault();
+            }
+        }
+
+        function handlePointerEnd(e) {
+            if (!isPointerDown) return;
+            
+            isPointerDown = false;
+            isDragging = false;
+            pointerId = null;
+            cardsWrapper.style.cursor = 'grab';
+            
+            const diff = pointerCurrentX - pointerStartX;
+            const threshold = cardWidth * 0.15; // Lowered threshold for easier swiping
+            
+            if (Math.abs(diff) > threshold) {
+                if (diff > 0 && currentIndex > 0) {
+                    // Swipe right - go to previous card
+                    prevCard();
+                } else if (diff < 0 && currentIndex < totalCards - 1) {
+                    // Swipe left - go to next card
+                    nextCard();
+                } else {
+                    // At edge, snap back
+                    updateCardPosition();
+                }
+            } else {
+                // Small movement, snap back to current position
+                updateCardPosition();
+            }
+        }
+
+        // Touch events
+        cardsWrapper.addEventListener('touchstart', handlePointerStart, { passive: false });
+        cardsWrapper.addEventListener('touchmove', handlePointerMove, { passive: false });
+        cardsWrapper.addEventListener('touchend', handlePointerEnd);
+        cardsWrapper.addEventListener('touchcancel', handlePointerEnd);
+
+        // Mouse events (for desktop drag)
+        cardsWrapper.addEventListener('mousedown', (e) => {
+            // Don't interfere with trackpad gestures - only handle actual mouse clicks
+            if (e.detail === 0) return; // Trackpad gesture
+            handlePointerStart(e);
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', handlePointerMove);
+        document.addEventListener('mouseup', handlePointerEnd);
+        document.addEventListener('mouseleave', handlePointerEnd);
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    prevCard();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    nextCard();
+                    break;
+                case '1':
+                    goToCard(0);
+                    break;
+                case '2':
+                    goToCard(1);
+                    break;
+                case '3':
+                    goToCard(2);
+                    break;
+            }
+        });
+
+        // Dot navigation
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                goToCard(index);
+            });
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            updateCardPosition(false);
+        });
+
+        // Prevent context menu on long press
+        cardsWrapper.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+        });
+
+        // Fetch real data from LocalBase API
+        async function fetchYesterdayData() {
+            // Use Netlify function for deployed version, localhost for development
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const apiUrl = isLocal ? 'http://localhost:5001/api/metrics/yesterday' : '/api/metrics/yesterday';
+            
+            try {
+                console.log('Fetching data from:', apiUrl);
+                
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Received data:', data);
+                
+                // Update global data object
+                yesterdayData = {
+                    leads: data.leads.count,
+                    leadsDetail: data.leads.detail,
+                    adSpend: data.adSpend.amount,
+                    spendDetail: data.adSpend.detail,
+                    sources: data.leads.sources
+                };
+                
+                // Log any errors from the API
+                if (data.errors && data.errors.length > 0) {
+                    console.warn('API warnings:', data.errors);
+                }
+                
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                
+                // Fallback to basic error data
+                yesterdayData = {
+                    leads: 0,
+                    leadsDetail: `API Error: ${error.message}`,
+                    adSpend: 0,
+                    spendDetail: 'Unable to load data',
+                    sources: []
+                };
+                
+                throw error; // Re-throw to trigger error handling in loadData()
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revenue Trend - July 2025</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { font-family: 'Arial', sans-serif; margin: 20px; background: #f8f9fa; }
+        .chart-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .chart-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; color: #333; }
+        .query-info { background: #e3f2fd; padding: 10px; border-radius: 4px; margin-bottom: 20px; }
+        .query-question { font-weight: bold; color: #1976d2; }
+        .query-answer { color: #424242; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <h1 class="chart-title">Revenue Trend - July 2025</h1>
+        
+        <div class="query-info">
+            <div class="query-question">Question: What was revenue in July 2025?</div>
+            <div class="query-answer">Answer: Revenue for July 2025: $12,500.75 from 15 invoices</div>
+        </div>
+        
+        <div id="chart"></div>
+        
+        <script>
+            // Chart data from QuickBooks query
+            const chartData = [{"date": "2025-07-01", "revenue": 10000.6}, {"date": "2025-07-15", "revenue": 11250.675000000001}, {"date": "2025-07-31", "revenue": 12500.75}];
+            const config = {"x_axis": "date", "y_axis": "revenue", "line_color": "#2E8B57", "format_currency": true, "height": 400, "margin": {"top": 20, "right": 30, "bottom": 40, "left": 90}};
+            
+            // D3.js chart implementation would go here
+            // For now, show the data structure
+            d3.select("#chart")
+                .append("pre")
+                .style("background", "#f5f5f5")
+                .style("padding", "15px")
+                .style("border-radius", "4px")
+                .text("Chart Data:\n" + JSON.stringify(chartData, null, 2));
+        </script>
+    </div>
+</body>
+</html>

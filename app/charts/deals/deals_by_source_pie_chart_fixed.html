@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoofMaxx Deals by Source - Pie Chart</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #1E1E2E;
+            color: #FFFFFF;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #5F8DFF;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            color: #B0B0B0;
+        }
+        
+        .chart-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 600px;
+        }
+        
+        .chart {
+            background: #252538;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 30px;
+            gap: 15px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #383850;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: #2A2A3C;
+            border: 1px solid #5F8DFF;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 14px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+        
+        .arc-slice {
+            stroke: #1E1E2E;
+            stroke-width: 2;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        .arc-slice:hover {
+            opacity: 0.8;
+        }
+        
+        .arc-text {
+            font-size: 12px;
+            font-weight: 600;
+            fill: #FFFFFF;
+            text-anchor: middle;
+            pointer-events: none;
+        }
+        
+        .stats {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            color: #5DD6C7;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">RoofMaxx Deals by Source</div>
+        <div class="subtitle">Distribution of your 886 deals by dealtype</div>
+    </div>
+    
+    <div class="chart-container">
+        <div class="chart">
+            <div id="pie-chart"></div>
+            <div class="stats">
+                <strong>Total Deals: <span id="total-deals">886</span></strong>
+            </div>
+        </div>
+    </div>
+    
+    <div class="legend" id="legend"></div>
+    
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // Data from your RoofMaxx deals analysis - WORKING DATA!
+        const data = [
+            { source: "NAP", count: 316, percentage: 35.7 },
+            { source: "NAP-L", count: 146, percentage: 16.5 },
+            { source: "NAP-S", count: 97, percentage: 10.9 },
+            { source: "RMCL", count: 96, percentage: 10.8 },
+            { source: "GRML", count: 74, percentage: 8.4 },
+            { source: "SG", count: 73, percentage: 8.2 },
+            { source: "DDSM", count: 29, percentage: 3.3 },
+            { source: "MICRO", count: 22, percentage: 2.5 },
+            { source: "RMCL-F", count: 15, percentage: 1.7 },
+            { source: "ASP", count: 11, percentage: 1.2 },
+            { source: "TO", count: 6, percentage: 0.7 },
+            { source: "USG", count: 1, percentage: 0.1 }
+        ];
+
+        console.log("Data loaded:", data);
+
+        // Color palette
+        const colors = [
+            "#5F8DFF", "#5DD6C7", "#FFB366", "#B794F6",
+            "#7BA4FF", "#7FEDDF", "#FF8A80", "#81C784",
+            "#64B5F6", "#F06292", "#FFD54F", "#A1887F"
+        ];
+
+        // Chart dimensions
+        const width = 500;
+        const height = 400;
+        const radius = Math.min(width, height) / 2 - 40;
+
+        // Create SVG
+        const svg = d3.select("#pie-chart")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const g = svg.append("g")
+            .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+        // Create pie generator
+        const pie = d3.pie()
+            .value(d => d.count)
+            .sort(null);
+
+        // Create arc generator
+        const arc = d3.arc()
+            .innerRadius(60)
+            .outerRadius(radius);
+
+        const labelArc = d3.arc()
+            .innerRadius(radius + 10)
+            .outerRadius(radius + 10);
+
+        // Create tooltip
+        const tooltip = d3.select("#tooltip");
+
+        // Create arcs
+        const arcs = g.selectAll(".arc")
+            .data(pie(data))
+            .enter().append("g")
+            .attr("class", "arc");
+
+        console.log("Creating pie slices...");
+
+        // Add pie slices
+        arcs.append("path")
+            .attr("class", "arc-slice")
+            .attr("d", arc)
+            .attr("fill", (d, i) => colors[i % colors.length])
+            .on("mouseover", function(event, d) {
+                tooltip.style("opacity", 1)
+                    .html(`
+                        <strong>${d.data.source}</strong><br/>
+                        Deals: ${d.data.count}<br/>
+                        Percentage: ${d.data.percentage.toFixed(1)}%
+                    `)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 10) + "px");
+            })
+            .on("mouseout", function() {
+                tooltip.style("opacity", 0);
+            });
+
+        // Add percentage labels for larger slices
+        arcs.append("text")
+            .attr("class", "arc-text")
+            .attr("transform", d => {
+                const centroid = arc.centroid(d);
+                return `translate(${centroid})`;
+            })
+            .text(d => d.data.percentage >= 5 ? `${d.data.percentage.toFixed(1)}%` : "")
+            .style("font-size", d => d.data.percentage >= 10 ? "14px" : "12px");
+
+        // Create legend
+        const legend = d3.select("#legend");
+        
+        data.forEach((d, i) => {
+            const legendItem = legend.append("div")
+                .attr("class", "legend-item");
+            
+            legendItem.append("div")
+                .attr("class", "legend-color")
+                .style("background-color", colors[i % colors.length]);
+            
+            legendItem.append("span")
+                .text(`${d.source} (${d.count} deals)`);
+        });
+
+        // Add center text
+        g.append("text")
+            .attr("text-anchor", "middle")
+            .attr("dy", "-0.5em")
+            .style("font-size", "24px")
+            .style("font-weight", "700")
+            .style("fill", "#5F8DFF")
+            .text("886");
+
+        g.append("text")
+            .attr("text-anchor", "middle")
+            .attr("dy", "1em")
+            .style("font-size", "14px")
+            .style("fill", "#B0B0B0")
+            .text("Total Deals");
+
+        console.log("Pie chart completed!");
+    </script>
+</body>
+</html>

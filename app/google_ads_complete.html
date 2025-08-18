@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Ads Performance - LocalBase</title>
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <style>
+        :root {
+            --lb-blue: #5F8DFF;
+            --lb-black: #1E1E2E;
+            --lb-gray-dark: #2A2A3C;
+            --lb-gray-medium: #383850;
+            --lb-white: #FFFFFF;
+            --lb-green: #5DD6C7;
+            --lb-orange: #FFB366;
+            --lb-purple: #B794F6;
+            --text-color: var(--lb-white);
+            --secondary-text: #B8B8D0;
+            --border-color: #404060;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--lb-black);
+            color: var(--text-color);
+            padding: 20px;
+        }
+
+        .header {
+            background-color: var(--lb-gray-medium);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 0;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+
+        .logo:hover {
+            opacity: 0.8;
+        }
+
+        .logo .highlight {
+            color: var(--lb-blue);
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .title {
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: var(--secondary-text);
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background-color: var(--lb-gray-dark);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            padding: 16px;
+            background-color: var(--lb-gray-medium);
+            border-radius: 8px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        select, button {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--lb-gray-dark);
+            color: var(--text-color);
+            font-size: 14px;
+        }
+
+        button {
+            background-color: var(--lb-blue);
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #4A7AE8;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .legend-item:hover {
+            background-color: var(--lb-gray-medium);
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .legend-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        #chart {
+            width: 100%;
+            height: 500px;
+            background-color: var(--lb-gray-medium);
+            border-radius: 8px;
+        }
+
+        .line {
+            fill: none;
+            stroke-width: 3;
+        }
+
+        .axis {
+            font-size: 12px;
+        }
+
+        .axis text {
+            fill: var(--secondary-text);
+        }
+
+        .axis path,
+        .axis line {
+            stroke: var(--border-color);
+        }
+
+        .grid-line {
+            stroke: var(--border-color);
+            stroke-width: 1;
+            opacity: 0.3;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(30, 30, 46, 0.95);
+            color: var(--text-color);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .hover-line {
+            stroke: var(--secondary-text);
+            stroke-width: 1;
+            stroke-dasharray: 3,3;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <a href="gallery.html" class="logo" style="text-decoration: none;">
+                    Local<span class="highlight">Base</span>
+                </a>
+                <nav>
+                    <a href="gallery.html" style="color: var(--secondary-text); text-decoration: none; margin-right: 20px;">
+                        <i class="fas fa-layer-group"></i> Gallery
+                    </a>
+                    <a href="templates/multi_line_chart.html" style="color: var(--secondary-text); text-decoration: none;">
+                        <i class="fas fa-chart-line"></i> Template
+                    </a>
+                </nav>
+            </div>
+        </header>
+
+        <h1 class="title">🚁 Google Ads Performance</h1>
+        <p class="subtitle">Campaign spend over time - Full 2025 data (Jan-July)</p>
+        
+        <div class="chart-card">
+            <div class="controls">
+                <div class="control-group">
+                    <label for="timeRange" style="color: var(--text-color); font-weight: 500;">Time Range:</label>
+                    <select id="timeRange">
+                        <option value="7">Last 7 Days</option>
+                        <option value="30" selected>Last 30 Days</option>
+                        <option value="60">Last 60 Days</option>
+                        <option value="90">Last 90 Days</option>
+                        <option value="180">Last 6 Months</option>
+                        <option value="all">All 2025 (Jan-July)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="granularity" style="color: var(--text-color); font-weight: 500;">View:</label>
+                    <select id="granularity">
+                        <option value="day" selected>Daily</option>
+                        <option value="week">Weekly</option>
+                        <option value="month">Monthly</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <button onclick="toggleAllLines()">Toggle All Lines</button>
+                    <button onclick="resetView()">Reset View</button>
+                    <button onclick="exportData()">Export CSV</button>
+                </div>
+            </div>
+
+            <div class="legend" id="legend"></div>
+            <svg id="chart"></svg>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // Load the complete full year dataset
+        fetch('../data/google_ads_full_year.json')
+            .then(response => response.json())
+            .then(rawData => {
+                console.log("🚀 Starting Google Ads chart...");
+                console.log("📊 Raw data loaded:", rawData.length, "records");
+                initializeChart(rawData);
+            })
+            .catch(error => {
+                console.error("❌ Error loading full year data:", error);
+                // Fallback to basic sample data
+                const sampleData = [
+                    {"date": "2025-01-01", "roofmaxx_kc_roof_restoration": 57.80, "kc_roof_restoration": 33.03, "roofmaxx_storm_damage": 41.28, "roof_maintenance_services": 16.51, "commercial_roofing_kc": 16.51},
+                    {"date": "2025-01-02", "roofmaxx_kc_roof_restoration": 56.77, "kc_roof_restoration": 32.44, "roofmaxx_storm_damage": 40.55, "roof_maintenance_services": 16.22, "commercial_roofing_kc": 16.22},
+                    {"date": "2025-07-31", "roofmaxx_kc_roof_restoration": 61.15, "kc_roof_restoration": 34.94, "roofmaxx_storm_damage": 43.68, "roof_maintenance_services": 17.47, "commercial_roofing_kc": 17.47}
+                ];
+                console.log("📊 Using fallback sample data:", sampleData.length, "records");
+                initializeChart(sampleData);
+            });
+
+        let chart, series, xScale, yScale, line, allData, svg;
+
+        function initializeChart(rawData) {
+            // Store full dataset
+            allData = rawData;
+            
+            // Chart setup - full width
+            const margin = { top: 20, right: 80, bottom: 60, left: 80 };
+            const containerWidth = document.getElementById('chart').getBoundingClientRect().width;
+            const width = containerWidth - margin.left - margin.right;
+            const height = 500 - margin.top - margin.bottom;
+
+            const colors = ['#5F8DFF', '#5DD6C7', '#FFB366', '#B794F6', '#7BA4FF'];
+            
+            // Process data - convert date strings to Date objects
+            const data = rawData.map(d => ({
+                ...d,
+                date: new Date(d.date + 'T00:00:00') // Ensure consistent parsing
+            }));
+
+            console.log("📅 Processed data sample:", data[0]);
+
+            const campaigns = ['roofmaxx_kc_roof_restoration', 'kc_roof_restoration', 'roofmaxx_storm_damage', 'roof_maintenance_services', 'commercial_roofing_kc'];
+            
+            series = campaigns.map((campaign, i) => ({
+                name: campaign,
+                displayName: campaign.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                color: colors[i],
+                visible: true,
+                values: data.map(d => ({ 
+                    date: d.date, 
+                    value: parseFloat(d[campaign]) || 0 
+                }))
+            }));
+
+            console.log("📈 Series created:", series.length);
+
+            // Create SVG
+            d3.select("#chart").selectAll("*").remove();
+            svg = d3.select("#chart")
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            // Scales
+            const xExtent = d3.extent(data, d => d.date);
+            console.log("📅 Date extent:", xExtent);
+
+            xScale = d3.scaleTime()
+                .domain(xExtent)
+                .range([0, width]);
+
+            const maxValue = d3.max(series, s => d3.max(s.values, d => d.value));
+            console.log("📊 Max value:", maxValue);
+
+            yScale = d3.scaleLinear()
+                .domain([0, maxValue])
+                .nice()
+                .range([height, 0]);
+
+            // Line generator
+            line = d3.line()
+                .x(d => xScale(d.date))
+                .y(d => yScale(d.value))
+                .curve(d3.curveMonotoneX);
+
+            // Add grid
+            svg.append("g")
+                .attr("class", "grid")
+                .selectAll("line")
+                .data(yScale.ticks())
+                .enter().append("line")
+                .attr("class", "grid-line")
+                .attr("x1", 0)
+                .attr("x2", width)
+                .attr("y1", d => yScale(d))
+                .attr("y2", d => yScale(d));
+
+            // Add axes
+            svg.append("g")
+                .attr("class", "axis")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(xScale).tickFormat(d3.timeFormat("%b %d")));
+
+            svg.append("g")
+                .attr("class", "axis")
+                .call(d3.axisLeft(yScale).tickFormat(d => `$${d}`));
+
+            // Add lines
+            console.log("🎨 Drawing lines...");
+            series.forEach((s, i) => {
+                svg.append("path")
+                    .datum(s.values)
+                    .attr("class", "line")
+                    .attr("id", `line-${i}`)
+                    .attr("d", line)
+                    .style("stroke", s.color)
+                    .style("opacity", s.visible ? 1 : 0);
+            });
+
+            // Add interactivity
+            addTooltip(svg, width, height, data, rawData);
+
+            // Create legend
+            createLegend();
+
+            console.log("✅ Google Ads chart completed successfully!");
+            
+            // Apply default 30-day filter
+            filterData();
+            
+            // Add event listeners
+            setupEventListeners();
+        }
+        
+        function setupEventListeners() {
+            document.getElementById('timeRange').addEventListener('change', filterData);
+            document.getElementById('granularity').addEventListener('change', filterData);
+        }
+        
+        function filterData() {
+            const timeRange = document.getElementById('timeRange').value;
+            const granularity = document.getElementById('granularity').value;
+            
+            console.log("🔍 Filtering data:", timeRange, "days,", granularity, "granularity");
+            
+            // Filter by time range
+            let filteredData = [...allData];
+            if (timeRange !== 'all') {
+                const cutoffDate = new Date();
+                cutoffDate.setDate(cutoffDate.getDate() - parseInt(timeRange));
+                filteredData = allData.filter(d => new Date(d.date) >= cutoffDate);
+            }
+            
+            // Aggregate by granularity
+            const aggregatedData = aggregateByGranularity(filteredData, granularity);
+            
+            // Update chart with filtered data
+            updateChart(aggregatedData);
+        }
+        
+        function aggregateByGranularity(data, granularity) {
+            if (granularity === 'day') {
+                return data.map(d => ({
+                    ...d,
+                    date: new Date(d.date + 'T00:00:00')
+                }));
+            }
+            
+            const grouped = {};
+            const campaigns = ['roofmaxx_kc_roof_restoration', 'kc_roof_restoration', 'roofmaxx_storm_damage', 'roof_maintenance_services', 'commercial_roofing_kc'];
+            
+            data.forEach(d => {
+                const date = new Date(d.date);
+                let key;
+                
+                if (granularity === 'week') {
+                    // Get start of week (Sunday)
+                    const startOfWeek = new Date(date);
+                    startOfWeek.setDate(date.getDate() - date.getDay());
+                    key = startOfWeek.toISOString().split('T')[0];
+                } else if (granularity === 'month') {
+                    // Get start of month
+                    key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
+                }
+                
+                if (!grouped[key]) {
+                    grouped[key] = { date: key };
+                    campaigns.forEach(campaign => {
+                        grouped[key][campaign] = 0;
+                    });
+                }
+                
+                campaigns.forEach(campaign => {
+                    grouped[key][campaign] += parseFloat(d[campaign]) || 0;
+                });
+            });
+            
+            return Object.values(grouped).map(d => ({
+                ...d,
+                date: new Date(d.date + 'T00:00:00')
+            })).sort((a, b) => a.date - b.date);
+        }
+        
+        function updateChart(data) {
+            console.log("📊 Updating chart with", data.length, "data points");
+            
+            const margin = { top: 20, right: 80, bottom: 60, left: 80 };
+            const containerWidth = document.getElementById('chart').getBoundingClientRect().width;
+            const width = containerWidth - margin.left - margin.right;
+            const height = 500 - margin.top - margin.bottom;
+            
+            const campaigns = ['roofmaxx_kc_roof_restoration', 'kc_roof_restoration', 'roofmaxx_storm_damage', 'roof_maintenance_services', 'commercial_roofing_kc'];
+            const colors = ['#5F8DFF', '#5DD6C7', '#FFB366', '#B794F6', '#7BA4FF'];
+            
+            // Update series data
+            series = campaigns.map((campaign, i) => ({
+                name: campaign,
+                displayName: campaign.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                color: colors[i],
+                visible: series ? series[i].visible : true,
+                values: data.map(d => ({ 
+                    date: d.date, 
+                    value: parseFloat(d[campaign]) || 0 
+                }))
+            }));
+            
+            // Update scales
+            const xExtent = d3.extent(data, d => d.date);
+            xScale.domain(xExtent);
+            
+            const maxValue = d3.max(series, s => d3.max(s.values, d => d.value));
+            yScale.domain([0, maxValue]).nice();
+            
+            // Update line generator
+            line = d3.line()
+                .x(d => xScale(d.date))
+                .y(d => yScale(d.value))
+                .curve(d3.curveMonotoneX);
+            
+            // Clear and redraw
+            svg.selectAll("*").remove();
+            
+            // Add grid
+            svg.append("g")
+                .attr("class", "grid")
+                .selectAll("line")
+                .data(yScale.ticks())
+                .enter().append("line")
+                .attr("class", "grid-line")
+                .attr("x1", 0)
+                .attr("x2", width)
+                .attr("y1", d => yScale(d))
+                .attr("y2", d => yScale(d));
+
+            // Add axes
+            const granularity = document.getElementById('granularity').value;
+            const timeFormat = granularity === 'month' ? d3.timeFormat("%b %Y") : 
+                              granularity === 'week' ? d3.timeFormat("%b %d") : 
+                              d3.timeFormat("%b %d");
+            
+            svg.append("g")
+                .attr("class", "axis")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(xScale).tickFormat(timeFormat));
+
+            svg.append("g")
+                .attr("class", "axis")
+                .call(d3.axisLeft(yScale).tickFormat(d => `$${d}`));
+
+            // Add lines
+            series.forEach((s, i) => {
+                svg.append("path")
+                    .datum(s.values)
+                    .attr("class", "line")
+                    .attr("id", `line-${i}`)
+                    .attr("d", line)
+                    .style("stroke", s.color)
+                    .style("opacity", s.visible ? 1 : 0);
+            });
+
+            // Add interactivity
+            addTooltip(svg, width, height, data, data);
+            
+            // Update legend
+            createLegend();
+        }
+
+        function addTooltip(svg, width, height, data, rawData) {
+            const tooltip = d3.select("#tooltip");
+            const hoverLine = svg.append("line")
+                .attr("class", "hover-line")
+                .attr("y1", 0)
+                .attr("y2", height);
+
+            svg.append("rect")
+                .attr("width", width)
+                .attr("height", height)
+                .style("fill", "none")
+                .style("pointer-events", "all")
+                .on("mouseover", () => hoverLine.style("opacity", 1))
+                .on("mouseout", () => {
+                    hoverLine.style("opacity", 0);
+                    tooltip.style("opacity", 0);
+                })
+                .on("mousemove", function(event) {
+                    const [mouseX] = d3.pointer(event, this);
+                    const date = xScale.invert(mouseX);
+                    
+                    // Find closest data point
+                    const bisectDate = d3.bisector(d => d.date).left;
+                    const dataIndex = bisectDate(data, date, 1);
+                    const d0 = data[dataIndex - 1];
+                    const d1 = data[dataIndex];
+                    const d = date - d0?.date > d1?.date - date ? d1 : d0;
+                    
+                    if (d) {
+                        hoverLine
+                            .attr("x1", xScale(d.date))
+                            .attr("x2", xScale(d.date));
+                        
+                        const campaigns = ['roofmaxx_kc_roof_restoration', 'kc_roof_restoration', 'roofmaxx_storm_damage', 'roof_maintenance_services', 'commercial_roofing_kc'];
+                        const colors = ['#5F8DFF', '#5DD6C7', '#FFB366', '#B794F6', '#7BA4FF'];
+                        
+                        const tooltipContent = `
+                            <div style="font-weight: 600; margin-bottom: 6px;">${d3.timeFormat("%b %d, %Y")(d.date)}</div>
+                            ${campaigns.map((campaign, i) => `
+                                <div style="display: flex; align-items: center; gap: 6px; margin: 3px 0;">
+                                    <div style="width: 8px; height: 8px; background: ${colors[i]}; border-radius: 1px;"></div>
+                                    <span>${campaign.replace(/_/g, ' ')}: $${(d[campaign] || 0).toFixed(2)}</span>
+                                </div>
+                            `).join('')}
+                        `;
+                        
+                        tooltip
+                            .html(tooltipContent)
+                            .style("left", (event.pageX + 10) + "px")
+                            .style("top", (event.pageY - 10) + "px")
+                            .style("opacity", 1);
+                    }
+                });
+        }
+
+        function createLegend() {
+            const legend = d3.select("#legend");
+            legend.selectAll("*").remove();
+            
+            series.forEach((s, i) => {
+                const item = legend.append("div")
+                    .attr("class", "legend-item")
+                    .style("cursor", "pointer")
+                    .on("click", () => {
+                        s.visible = !s.visible;
+                        d3.select(`#line-${i}`).style("opacity", s.visible ? 1 : 0);
+                        item.style("opacity", s.visible ? 1 : 0.5);
+                    });
+
+                item.append("div")
+                    .attr("class", "legend-color")
+                    .style("background", s.color);
+
+                item.append("span")
+                    .attr("class", "legend-label")
+                    .text(s.displayName);
+            });
+        }
+
+        function toggleAllLines() {
+            const allVisible = series.every(d => d.visible);
+            series.forEach((d, i) => {
+                d.visible = !allVisible;
+                d3.select(`#line-${i}`).style("opacity", d.visible ? 1 : 0);
+            });
+            createLegend();
+        }
+
+        function resetView() {
+            // Reset selectors to defaults
+            document.getElementById('timeRange').value = '30';
+            document.getElementById('granularity').value = 'day';
+            
+            // Reset series visibility
+            if (series) {
+                series.forEach(s => s.visible = true);
+            }
+            
+            // Re-filter data
+            filterData();
+        }
+        
+        function exportData() {
+            const timeRange = document.getElementById('timeRange').value;
+            const granularity = document.getElementById('granularity').value;
+            
+            // Get current filtered data
+            let filteredData = [...allData];
+            if (timeRange !== 'all') {
+                const cutoffDate = new Date();
+                cutoffDate.setDate(cutoffDate.getDate() - parseInt(timeRange));
+                filteredData = allData.filter(d => new Date(d.date) >= cutoffDate);
+            }
+            
+            const aggregatedData = aggregateByGranularity(filteredData, granularity);
+            
+            // Convert to CSV
+            const campaigns = ['roofmaxx_kc_roof_restoration', 'kc_roof_restoration', 'roofmaxx_storm_damage', 'roof_maintenance_services', 'commercial_roofing_kc'];
+            const headers = ['date', ...campaigns.map(c => c.replace(/_/g, ' '))];
+            
+            const csvContent = [
+                headers.join(','),
+                ...aggregatedData.map(row => [
+                    row.date.toISOString().split('T')[0],
+                    ...campaigns.map(campaign => (row[campaign] || 0).toFixed(2))
+                ].join(','))
+            ].join('\n');
+            
+            // Download
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `google_ads_${granularity}_${timeRange}days_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            
+            console.log("📁 Data exported successfully");
+        }
+    </script>
+</body>
+</html>

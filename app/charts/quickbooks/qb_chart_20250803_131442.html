@@ -1,0 +1,45 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Spending - this month</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { font-family: 'Arial', sans-serif; margin: 20px; background: #f8f9fa; }
+        .chart-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .chart-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; color: #333; }
+        .query-info { background: #e3f2fd; padding: 10px; border-radius: 4px; margin-bottom: 20px; }
+        .query-question { font-weight: bold; color: #1976d2; }
+        .query-answer { color: #424242; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <h1 class="chart-title">Vendor Spending - this month</h1>
+        
+        <div class="query-info">
+            <div class="query-question">Question: How much did we pay vendors this month?</div>
+            <div class="query-answer">Answer: Total vendor spending in this month: $5,420.50 across 20 vendors</div>
+        </div>
+        
+        <div id="chart"></div>
+        
+        <script>
+            // Chart data from QuickBooks query
+            const chartData = [{"label": "Vendor 1", "value": 2168.2, "percentage": 40.0}, {"label": "Vendor 2", "value": 975.69, "percentage": 18.0}, {"label": "Vendor 3", "value": 455.32, "percentage": 8.4}, {"label": "Vendor 4", "value": 1821.29, "percentage": 33.6}];
+            const config = {"colors": ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FECA57"], "format_currency": true, "show_percentages": true, "height": 400, "legend_position": "right"};
+            
+            // D3.js chart implementation would go here
+            // For now, show the data structure
+            d3.select("#chart")
+                .append("pre")
+                .style("background", "#f5f5f5")
+                .style("padding", "15px")
+                .style("border-radius", "4px")
+                .text("Chart Data:\n" + JSON.stringify(chartData, null, 2));
+        </script>
+    </div>
+</body>
+</html>

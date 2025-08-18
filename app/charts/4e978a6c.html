@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoofMaxx Data Analysis - LocalBase</title>
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            /* LocalBase color palette */
+            --lb-blue: #5F8DFF;
+            --lb-blue-dark: #3A6FE3;
+            --lb-blue-light: #7BA4FF;
+            --lb-black: #1E1E2E;
+            --lb-gray-dark: #2A2A3C;
+            --lb-gray-medium: #383850;
+            --lb-gray-light: #4A4A65;
+            --lb-green: #5DD6C7;
+            --lb-green-light: #7FEDDF;
+            --lb-white: #FFFFFF;
+            --lb-orange: #FFB366;
+            --lb-purple: #B794F6;
+            
+            /* UI palette */
+            --background-dark: var(--lb-black);
+            --text-color: var(--lb-white);
+            --secondary-text: #B8B8D0;
+            --border-color: #404060;
+            --primary-color: var(--lb-blue);
+            --primary-hover: var(--lb-blue-light);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: var(--background-dark);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .chart-container {
+            background-color: var(--lb-gray-dark);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-header {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .chart-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 8px;
+        }
+
+        .chart-meta {
+            color: var(--secondary-text);
+            font-size: 12px;
+            font-style: italic;
+        }
+
+        .chart-content {
+            min-height: 400px;
+            background: var(--lb-white);
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .chart-actions {
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .chart-actions button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            margin: 0 8px;
+            transition: background-color 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .chart-actions button:hover {
+            background: var(--primary-hover);
+        }
+
+        .chart-actions button i {
+            margin-right: 6px;
+        }
+
+        /* LocalBase branding */
+        .localbase-brand {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--secondary-text);
+            font-size: 12px;
+        }
+
+        .localbase-brand a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="chart-container">
+            <div class="chart-header">
+                <h2 class="chart-title">RoofMaxx Data Analysis</h2>
+                <div class="chart-meta">Chart ID: 4e978a6c | Generated: 2025-08-03T17:39:17.764932</div>
+            </div>
+            
+            <div class="chart-content">
+                <canvas id="localbaseChart"></canvas>
+            </div>
+            
+            <div class="chart-actions">
+                <button onclick="exportChartData()">
+                    <i class="fas fa-download"></i> Export Data
+                </button>
+                <button onclick="window.print()">
+                    <i class="fas fa-print"></i> Print Chart
+                </button>
+                <button onclick="refreshChart()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+        
+        <div class="localbase-brand">
+            Powered by <a href="#" target="_blank">LocalBase</a> | Dynamic Chart System
+        </div>
+    </div>
+
+    <script>
+        const chartData = [
+  {
+    "date": "2025-07-28",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-29",
+    "deals": 3
+  },
+  {
+    "date": "2025-07-30",
+    "deals": 5
+  },
+  {
+    "date": "2025-07-31",
+    "deals": 2
+  }
+];
+        
+        // LocalBase color scheme for charts
+        const localbaseColors = {
+            primary: '#5F8DFF',
+            accent: '#5DD6C7', 
+            warning: '#FFB366',
+            info: '#B794F6',
+            gradients: ['#5F8DFF', '#5DD6C7', '#FFB366', '#B794F6', '#7BA4FF']
+        };
+        
+        // Extract labels and create datasets
+        const labels = chartData.map(d => d.date);
+        const datasets = [];
+        
+        // Get all value keys (excluding 'date')
+        const valueKeys = Object.keys(chartData[0] || {}).filter(k => k !== 'date');
+        
+        valueKeys.forEach((key, i) => {
+            datasets.push({
+                label: key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' '),
+                data: chartData.map(d => d[key]),
+                borderColor: localbaseColors.gradients[i % localbaseColors.gradients.length],
+                backgroundColor: localbaseColors.gradients[i % localbaseColors.gradients.length] + '20',
+                borderWidth: 3,
+                tension: 0.3,
+                fill: true,
+                pointBackgroundColor: localbaseColors.gradients[i % localbaseColors.gradients.length],
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            });
+        });
+
+        // Chart configuration with LocalBase theme
+        const config = {
+            type: 'line',
+            data: { labels, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: false // Title handled by template
+                    },
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            font: {
+                                family: 'Inter',
+                                size: 13,
+                                weight: '500'
+                            },
+                            padding: 20
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: '#E5E7EB',
+                            borderColor: '#D1D5DB'
+                        },
+                        ticks: {
+                            font: {
+                                family: 'Inter',
+                                size: 11
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#E5E7EB',
+                            borderColor: '#D1D5DB'
+                        },
+                        ticks: {
+                            font: {
+                                family: 'Inter',
+                                size: 11
+                            }
+                        }
+                    }
+                },
+                elements: {
+                    point: {
+                        radius: 4,
+                        hoverRadius: 6
+                    }
+                }
+            }
+        };
+
+        // Initialize chart when page loads
+        let chart;
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('localbaseChart').getContext('2d');
+            chart = new Chart(ctx, config);
+        });
+
+        // Export function
+        function exportChartData() {
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + "date," + Object.keys(chartData[0]).filter(k => k !== 'date').join(',') + "\\n"
+                + chartData.map(row => Object.values(row).join(',')).join('\\n');
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "4e978a6c_roofmaxx_deals.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Refresh function
+        function refreshChart() {
+            if (chart) {
+                chart.update();
+            }
+        }
+    </script>
+</body>
+</html>

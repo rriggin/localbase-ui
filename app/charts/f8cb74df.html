@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}RoofMaxx Deals - Last 30 Days (Embedded) - LocalBase{% endblock %}
+
+{% block styles %}
+/* Chart-specific styles using LocalBase design system */
+.chart-container {
+    background-color: var(--lb-gray-dark);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.chart-header {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.chart-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 8px;
+}
+
+.chart-meta {
+    color: var(--secondary-text);
+    font-size: 12px;
+    font-style: italic;
+}
+
+.chart-content {
+    min-height: 400px;
+    background: var(--lb-white);
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
+}
+
+.chart-actions {
+    margin-top: 16px;
+    text-align: center;
+}
+
+.chart-actions button {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    margin: 0 8px;
+    transition: background-color 0.2s;
+}
+
+.chart-actions button:hover {
+    background: var(--primary-hover);
+}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const chartData = [
+  {
+    "date": "2025-07-04",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-05",
+    "deals": 2
+  },
+  {
+    "date": "2025-07-06",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-07",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-10",
+    "deals": 2
+  },
+  {
+    "date": "2025-07-11",
+    "deals": 2
+  },
+  {
+    "date": "2025-07-13",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-15",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-16",
+    "deals": 4
+  },
+  {
+    "date": "2025-07-17",
+    "deals": 7
+  },
+  {
+    "date": "2025-07-18",
+    "deals": 3
+  },
+  {
+    "date": "2025-07-19",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-21",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-23",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-24",
+    "deals": 3
+  },
+  {
+    "date": "2025-07-25",
+    "deals": 2
+  },
+  {
+    "date": "2025-07-27",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-28",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-29",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-30",
+    "deals": 5
+  },
+  {
+    "date": "2025-07-31",
+    "deals": 1
+  }
+];
+    
+    // LocalBase color scheme for charts
+    const localbaseColors = {
+        primary: '#5F8DFF',
+        accent: '#5DD6C7', 
+        warning: '#FFB366',
+        info: '#B794F6',
+        gradients: ['#5F8DFF', '#5DD6C7', '#FFB366', '#B794F6', '#7BA4FF']
+    };
+    
+    // Extract labels and create datasets
+    const labels = chartData.map(d => d.date);
+    const datasets = [];
+    
+    // Get all value keys (excluding 'date')
+    const valueKeys = Object.keys(chartData[0] || {}).filter(k => k !== 'date');
+    
+    valueKeys.forEach((key, i) => {
+        datasets.push({
+            label: key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' '),
+            data: chartData.map(d => d[key]),
+            borderColor: localbaseColors.gradients[i % localbaseColors.gradients.length],
+            backgroundColor: localbaseColors.gradients[i % localbaseColors.gradients.length] + '20',
+            borderWidth: 2,
+            tension: 0.1,
+            fill: false
+        });
+    });
+
+    // Chart configuration with LocalBase theme
+    const config = {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: false // Title handled by template
+                },
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        font: {
+                            family: 'Inter',
+                            size: 12
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: '#E5E7EB',
+                        borderColor: '#D1D5DB'
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Inter',
+                            size: 11
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: '#E5E7EB',
+                        borderColor: '#D1D5DB'
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Inter',
+                            size: 11
+                        }
+                    }
+                }
+            },
+            elements: {
+                point: {
+                    radius: 4,
+                    hoverRadius: 6
+                }
+            }
+        }
+    };
+
+    // Initialize chart when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('localbaseChart').getContext('2d');
+        new Chart(ctx, config);
+    });
+
+    // Export function
+    function exportChartData() {
+        const csvContent = "data:text/csv;charset=utf-8," 
+            + "date," + Object.keys(chartData[0]).filter(k => k !== 'date').join(',') + "\\n"
+            + chartData.map(row => Object.values(row).join(',')).join('\\n');
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "f8cb74df_data.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="chart-container">
+        <div class="chart-header">
+            <h2 class="chart-title">RoofMaxx Deals - Last 30 Days (Embedded)</h2>
+            <div class="chart-meta">Chart ID: f8cb74df | Generated: 2025-08-03T17:34:58.968350</div>
+        </div>
+        
+        <div class="chart-content">
+            <canvas id="localbaseChart"></canvas>
+        </div>
+        
+        <div class="chart-actions">
+            <button onclick="exportChartData()">
+                <i class="fas fa-download"></i> Export Data
+            </button>
+            <button onclick="window.print()">
+                <i class="fas fa-print"></i> Print Chart
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

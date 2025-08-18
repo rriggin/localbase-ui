@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Line Chart - LocalBase</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #ffffff;
+            color: #000000;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .chart-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .chart-title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #000000;
+        }
+        
+        .chart-subtitle {
+            text-align: center;
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .control-group label {
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        select, button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            font-size: 14px;
+        }
+        
+        button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #0056D3;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        
+        .legend-item:hover {
+            background: #f0f0f0;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+        
+        .legend-label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .chart-svg {
+            width: 100%;
+            height: 600px;
+            background: #ffffff;
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+        
+        .line {
+            fill: none;
+            stroke-width: 2.5;
+        }
+        
+        .axis {
+            font-size: 12px;
+        }
+        
+        .axis-label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .grid-line {
+            stroke: #e0e0e0;
+            stroke-width: 1;
+            opacity: 0.5;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            max-width: 250px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .tooltip-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+        
+        .tooltip-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 2px 0;
+        }
+        
+        .tooltip-color {
+            width: 8px;
+            height: 8px;
+            border-radius: 1px;
+        }
+        
+        .hover-line {
+            stroke: #999;
+            stroke-width: 1;
+            stroke-dasharray: 3,3;
+            opacity: 0;
+        }
+        
+        .data-point {
+            fill: white;
+            stroke-width: 2;
+            r: 4;
+            opacity: 0;
+        }
+        
+        .data-point:hover {
+            r: 6;
+            opacity: 1;
+        }
+        
+        .stats-panel {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #007AFF;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .localbase-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+        }
+        
+        .localbase-header h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+            font-weight: 700;
+        }
+        
+        .localbase-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <div class="localbase-header">
+            <h1>📈 LocalBase Analytics</h1>
+            <p>Multi-Line Chart Visualization</p>
+        </div>
+        
+        <h1 class="chart-title" id="chartTitle">Multi-Line Chart</h1>
+        <p class="chart-subtitle" id="chartSubtitle">Interactive time series visualization</p>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="timeRange">Time Range:</label>
+                <select id="timeRange">
+                    <option value="all">All Time</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="365">Last Year</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <button onclick="toggleAllLines()">Toggle All Lines</button>
+                <button onclick="resetZoom()">Reset Zoom</button>
+                <button onclick="exportData()">Export Data</button>
+            </div>
+        </div>
+        
+        <div class="legend" id="legend"></div>
+        
+        <svg class="chart-svg" id="chartSvg"></svg>
+        
+        <div class="stats-panel">
+            <div class="stats-grid" id="stats"></div>
+        </div>
+    </div>
+    
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // This will be populated by the chart generator
+        let chartData = [];
+        let chartConfig = {
+            title: "Multi-Line Chart",
+            subtitle: "Interactive visualization",
+            yLabel: "Value",
+            xLabel: "Date"
+        };
+        
+        // Chart dimensions
+        const margin = { top: 20, right: 80, bottom: 60, left: 80 };
+        const width = 1100 - margin.left - margin.right;
+        const height = 600 - margin.top - margin.bottom;
+        
+        // Color scale
+        const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+        
+        // Global variables
+        let svg, xScale, yScale, line, series, parseTime, formatTime;
+        
+        function initializeChart(data, config = {}) {
+            chartData = data;
+            chartConfig = { ...chartConfig, ...config };
+            
+            // Update titles
+            document.getElementById('chartTitle').textContent = chartConfig.title;
+            document.getElementById('chartSubtitle').textContent = chartConfig.subtitle;
+            
+            // Parse data
+            parseTime = d3.timeParse("%Y-%m-%d");
+            formatTime = d3.timeFormat("%b %d, %Y");
+            
+            const processedData = chartData.map(d => ({
+                date: parseTime(d.date),
+                ...d
+            })).sort((a, b) => a.date - b.date);
+            
+            // Get series keys (all keys except 'date')
+            const seriesKeys = Object.keys(chartData[0]).filter(key => key !== 'date');
+            
+            // Transform data for D3
+            series = seriesKeys.map(key => ({
+                name: key,
+                values: processedData.map(d => ({
+                    date: d.date,
+                    value: +d[key] || 0
+                })),
+                visible: true
+            }));
+            
+            // Set up SVG
+            d3.select("#chartSvg").selectAll("*").remove();
+            svg = d3.select("#chartSvg")
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+            
+            // Set up scales
+            xScale = d3.scaleTime()
+                .domain(d3.extent(processedData, d => d.date))
+                .range([0, width]);
+            
+            yScale = d3.scaleLinear()
+                .domain([0, d3.max(series, s => d3.max(s.values, d => d.value))])
+                .nice()
+                .range([height, 0]);
+            
+            // Line generator
+            line = d3.line()
+                .x(d => xScale(d.date))
+                .y(d => yScale(d.value))
+                .curve(d3.curveMonotoneX);
+            
+            drawChart();
+            createLegend();
+            updateStats();
+        }
+        
+        function drawChart() {
+            // Add grid lines
+            svg.append("g")
+                .attr("class", "grid")
+                .selectAll("line")
+                .data(yScale.ticks())
+                .enter().append("line")
+                .attr("class", "grid-line")
+                .attr("x1", 0)
+                .attr("x2", width)
+                .attr("y1", d => yScale(d))
+                .attr("y2", d => yScale(d));
+            
+            // Add axes
+            svg.append("g")
+                .attr("class", "axis")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(xScale).tickFormat(d3.timeFormat("%b %d")));
+            
+            svg.append("g")
+                .attr("class", "axis")
+                .call(d3.axisLeft(yScale));
+            
+            // Add axis labels
+            svg.append("text")
+                .attr("class", "axis-label")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin.left)
+                .attr("x", 0 - (height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text(chartConfig.yLabel);
+            
+            svg.append("text")
+                .attr("class", "axis-label")
+                .attr("transform", `translate(${width / 2}, ${height + margin.bottom - 10})`)
+                .style("text-anchor", "middle")
+                .text(chartConfig.xLabel);
+            
+            // Add lines
+            const lineGroups = svg.selectAll(".line-group")
+                .data(series)
+                .enter().append("g")
+                .attr("class", "line-group");
+            
+            lineGroups.append("path")
+                .attr("class", "line")
+                .attr("d", d => line(d.values))
+                .style("stroke", (d, i) => colorScale(i))
+                .style("opacity", d => d.visible ? 1 : 0);
+            
+            // Add data points
+            lineGroups.selectAll(".data-point")
+                .data(d => d.values)
+                .enter().append("circle")
+                .attr("class", "data-point")
+                .attr("cx", d => xScale(d.date))
+                .attr("cy", d => yScale(d.value))
+                .style("stroke", (d, i, nodes) => {
+                    const seriesIndex = Array.from(nodes[0].parentNode.parentNode.children).indexOf(nodes[0].parentNode);
+                    return colorScale(seriesIndex);
+                });
+            
+            addInteractivity();
+        }
+        
+        function addInteractivity() {
+            const tooltip = d3.select("#tooltip");
+            
+            // Hover line
+            const hoverLine = svg.append("line")
+                .attr("class", "hover-line")
+                .attr("y1", 0)
+                .attr("y2", height);
+            
+            // Mouse events
+            svg.append("rect")
+                .attr("width", width)
+                .attr("height", height)
+                .style("fill", "none")
+                .style("pointer-events", "all")
+                .on("mouseover", function() {
+                    hoverLine.style("opacity", 1);
+                    d3.selectAll(".data-point").style("opacity", 0.7);
+                })
+                .on("mouseout", function() {
+                    hoverLine.style("opacity", 0);
+                    tooltip.style("opacity", 0);
+                    d3.selectAll(".data-point").style("opacity", 0);
+                })
+                .on("mousemove", function(event) {
+                    const [mouseX] = d3.pointer(event, this);
+                    const date = xScale.invert(mouseX);
+                    
+                    // Find closest data point
+                    const bisectDate = d3.bisector(d => d.date).left;
+                    const dataIndex = bisectDate(chartData.map(d => parseTime(d.date)), date, 1);
+                    const d0 = chartData[dataIndex - 1];
+                    const d1 = chartData[dataIndex];
+                    const d = date - parseTime(d0?.date) > parseTime(d1?.date) - date ? d1 : d0;
+                    
+                    if (d) {
+                        hoverLine
+                            .attr("x1", xScale(parseTime(d.date)))
+                            .attr("x2", xScale(parseTime(d.date)));
+                        
+                        // Show tooltip
+                        const seriesKeys = Object.keys(d).filter(key => key !== 'date');
+                        const tooltipContent = `
+                            <div class="tooltip-title">${formatTime(parseTime(d.date))}</div>
+                            ${seriesKeys.map((key, i) => `
+                                <div class="tooltip-item">
+                                    <div class="tooltip-color" style="background: ${colorScale(i)}"></div>
+                                    <span>${key.replace(/_/g, ' ')}: ${(d[key] || 0).toLocaleString()}</span>
+                                </div>
+                            `).join('')}
+                        `;
+                        
+                        tooltip
+                            .html(tooltipContent)
+                            .style("left", (event.pageX + 10) + "px")
+                            .style("top", (event.pageY - 10) + "px")
+                            .style("opacity", 1);
+                    }
+                });
+        }
+        
+        function createLegend() {
+            const legend = d3.select("#legend");
+            legend.selectAll("*").remove();
+            
+            const legendItems = legend.selectAll(".legend-item")
+                .data(series)
+                .enter().append("div")
+                .attr("class", "legend-item")
+                .on("click", function(event, d) {
+                    d.visible = !d.visible;
+                    updateChart();
+                    updateLegend();
+                });
+            
+            legendItems.append("div")
+                .attr("class", "legend-color")
+                .style("background", (d, i) => colorScale(i));
+            
+            legendItems.append("span")
+                .attr("class", "legend-label")
+                .text(d => d.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()));
+        }
+        
+        function updateChart() {
+            svg.selectAll(".line")
+                .style("opacity", d => d.visible ? 1 : 0);
+        }
+        
+        function updateLegend() {
+            d3.select("#legend").selectAll(".legend-item")
+                .style("opacity", d => d.visible ? 1 : 0.5);
+        }
+        
+        function toggleAllLines() {
+            const allVisible = series.every(d => d.visible);
+            series.forEach(d => d.visible = !allVisible);
+            updateChart();
+            updateLegend();
+        }
+        
+        function resetZoom() {
+            const processedData = chartData.map(d => ({
+                date: parseTime(d.date),
+                ...d
+            }));
+            
+            xScale.domain(d3.extent(processedData, d => d.date));
+            yScale.domain([0, d3.max(series, s => d3.max(s.values, d => d.value))]);
+            
+            svg.select(".axis")
+                .transition()
+                .duration(750)
+                .call(d3.axisBottom(xScale).tickFormat(d3.timeFormat("%b %d")));
+            
+            svg.selectAll(".line")
+                .transition()
+                .duration(750)
+                .attr("d", d => line(d.values));
+        }
+        
+        function updateStats() {
+            const seriesKeys = Object.keys(chartData[0]).filter(key => key !== 'date');
+            const stats = seriesKeys.map(key => {
+                const values = chartData.map(d => d[key] || 0);
+                return {
+                    name: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                    total: d3.sum(values),
+                    average: d3.mean(values),
+                    max: d3.max(values)
+                };
+            });
+            
+            const statsHtml = stats.map(stat => `
+                <div class="stat-item">
+                    <div class="stat-value">${stat.total.toLocaleString()}</div>
+                    <div class="stat-label">Total ${stat.name}</div>
+                </div>
+            `).join('');
+            
+            d3.select("#stats").html(statsHtml);
+        }
+        
+        function exportData() {
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + "date," + Object.keys(chartData[0]).filter(k => k !== 'date').join(',') + "\n"
+                + chartData.map(row => Object.values(row).join(',')).join('\n');
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "chart_data.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // Time range filter
+        document.getElementById('timeRange').addEventListener('change', function() {
+            const days = +this.value;
+            if (this.value === 'all') return resetZoom();
+            
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - days);
+            
+            const processedData = chartData.map(d => ({
+                date: parseTime(d.date),
+                ...d
+            })).filter(d => d.date >= cutoffDate);
+            
+            xScale.domain(d3.extent(processedData, d => d.date));
+            yScale.domain([0, d3.max(series, s => 
+                d3.max(s.values.filter(v => v.date >= cutoffDate), d => d.value)
+            )]);
+            
+            svg.select(".axis")
+                .transition()
+                .duration(750)
+                .call(d3.axisBottom(xScale).tickFormat(d3.timeFormat("%b %d")));
+            
+            svg.selectAll(".line")
+                .transition()
+                .duration(750)
+                .attr("d", d => line(d.values.filter(v => v.date >= cutoffDate)));
+        });
+        
+        
+        // Chart data injected by generator
+        const chartData = [
+  {
+    "date": "2025-05-03",
+    "roofmaxx_kc_roof_restoration": 127.73,
+    "kc_roof_restoration": 67.67,
+    "roofmaxx_storm_damage": 174.88,
+    "roof_maintenance_services": 66.15,
+    "commercial_roofing_kc": 87.49
+  },
+  {
+    "date": "2025-05-04",
+    "roofmaxx_kc_roof_restoration": 110.63,
+    "kc_roof_restoration": 86.67,
+    "roofmaxx_storm_damage": 126.29,
+    "roof_maintenance_services": 68.08,
+    "commercial_roofing_kc": 96.92
+  },
+  {
+    "date": "2025-05-05",
+    "roofmaxx_kc_roof_restoration": 153.56,
+    "kc_roof_restoration": 143.58,
+    "roofmaxx_storm_damage": 258.25,
+    "roof_maintenance_services": 105.28,
+    "commercial_roofing_kc": 159.21
+  },
+  {
+    "date": "2025-05-06",
+    "roofmaxx_kc_roof_restoration": 187.85,
+    "kc_roof_restoration": 127.36,
+    "roofmaxx_storm_damage": 190.63,
+    "roof_maintenance_services": 94.63,
+    "commercial_roofing_kc": 144.32
+  },
+  {
+    "date": "2025-05-07",
+    "roofmaxx_kc_roof_restoration": 193.49,
+    "kc_roof_restoration": 109.41,
+    "roofmaxx_storm_damage": 239.63,
+    "roof_maintenance_services": 94.21,
+    "commercial_roofing_kc": 123.44
+  },
+  {
+    "date": "2025-05-08",
+    "roofmaxx_kc_roof_restoration": 166.94,
+    "kc_roof_restoration": 141.61,
+    "roofmaxx_storm_damage": 217.36,
+    "roof_maintenance_services": 104.33,
+    "commercial_roofing_kc": 146.44
+  },
+  {
+    "date": "2025-05-09",
+    "roofmaxx_kc_roof_restoration": 162.21,
+    "kc_roof_restoration": 141.04,
+    "roofmaxx_storm_damage": 239.17,
+    "roof_maintenance_services": 89.91,
+    "commercial_roofing_kc": 119.66
+  },
+  {
+    "date": "2025-05-10",
+    "roofmaxx_kc_roof_restoration": 129.93,
+    "kc_roof_restoration": 69.11,
+    "roofmaxx_storm_damage": 129.69,
+    "roof_maintenance_services": 70.02,
+    "commercial_roofing_kc": 80.75
+  },
+  {
+    "date": "2025-05-11",
+    "roofmaxx_kc_roof_restoration": 122.35,
+    "kc_roof_restoration": 94.67,
+    "roofmaxx_storm_damage": 195.95,
+    "roof_maintenance_services": 64.24,
+    "commercial_roofing_kc": 94.19
+  },
+  {
+    "date": "2025-05-12",
+    "roofmaxx_kc_roof_restoration": 162.78,
+    "kc_roof_restoration": 111.74,
+    "roofmaxx_storm_damage": 180.68,
+    "roof_maintenance_services": 97.14,
+    "commercial_roofing_kc": 169.27
+  },
+  {
+    "date": "2025-05-13",
+    "roofmaxx_kc_roof_restoration": 201.71,
+    "kc_roof_restoration": 122.05,
+    "roofmaxx_storm_damage": 267.73,
+    "roof_maintenance_services": 97.5,
+    "commercial_roofing_kc": 158.52
+  },
+  {
+    "date": "2025-05-14",
+    "roofmaxx_kc_roof_restoration": 206.24,
+    "kc_roof_restoration": 142.75,
+    "roofmaxx_storm_damage": 230.64,
+    "roof_maintenance_services": 95.04,
+    "commercial_roofing_kc": 129.38
+  },
+  {
+    "date": "2025-05-15",
+    "roofmaxx_kc_roof_restoration": 165.9,
+    "kc_roof_restoration": 111.2,
+    "roofmaxx_storm_damage": 214.3,
+    "roof_maintenance_services": 90.79,
+    "commercial_roofing_kc": 156.17
+  },
+  {
+    "date": "2025-05-16",
+    "roofmaxx_kc_roof_restoration": 165.26,
+    "kc_roof_restoration": 115.69,
+    "roofmaxx_storm_damage": 199.14,
+    "roof_maintenance_services": 103.36,
+    "commercial_roofing_kc": 149.35
+  },
+  {
+    "date": "2025-05-17",
+    "roofmaxx_kc_roof_restoration": 108.08,
+    "kc_roof_restoration": 81.71,
+    "roofmaxx_storm_damage": 141.42,
+    "roof_maintenance_services": 68.8,
+    "commercial_roofing_kc": 111.25
+  },
+  {
+    "date": "2025-05-18",
+    "roofmaxx_kc_roof_restoration": 130.26,
+    "kc_roof_restoration": 65.5,
+    "roofmaxx_storm_damage": 177.79,
+    "roof_maintenance_services": 61.13,
+    "commercial_roofing_kc": 97.03
+  },
+  {
+    "date": "2025-05-19",
+    "roofmaxx_kc_roof_restoration": 169.0,
+    "kc_roof_restoration": 136.48,
+    "roofmaxx_storm_damage": 254.06,
+    "roof_maintenance_services": 101.21,
+    "commercial_roofing_kc": 164.79
+  },
+  {
+    "date": "2025-05-20",
+    "roofmaxx_kc_roof_restoration": 174.89,
+    "kc_roof_restoration": 106.79,
+    "roofmaxx_storm_damage": 247.15,
+    "roof_maintenance_services": 94.35,
+    "commercial_roofing_kc": 156.52
+  },
+  {
+    "date": "2025-05-21",
+    "roofmaxx_kc_roof_restoration": 203.2,
+    "kc_roof_restoration": 108.78,
+    "roofmaxx_storm_damage": 286.92,
+    "roof_maintenance_services": 105.63,
+    "commercial_roofing_kc": 129.19
+  },
+  {
+    "date": "2025-05-22",
+    "roofmaxx_kc_roof_restoration": 192.1,
+    "kc_roof_restoration": 137.08,
+    "roofmaxx_storm_damage": 291.27,
+    "roof_maintenance_services": 88.79,
+    "commercial_roofing_kc": 125.75
+  },
+  {
+    "date": "2025-05-23",
+    "roofmaxx_kc_roof_restoration": 356.13,
+    "kc_roof_restoration": 193.1,
+    "roofmaxx_storm_damage": 515.57,
+    "roof_maintenance_services": 160.08,
+    "commercial_roofing_kc": 270.04
+  },
+  {
+    "date": "2025-05-24",
+    "roofmaxx_kc_roof_restoration": 214.64,
+    "kc_roof_restoration": 158.03,
+    "roofmaxx_storm_damage": 355.09,
+    "roof_maintenance_services": 127.82,
+    "commercial_roofing_kc": 166.94
+  },
+  {
+    "date": "2025-05-25",
+    "roofmaxx_kc_roof_restoration": 221.86,
+    "kc_roof_restoration": 119.4,
+    "roofmaxx_storm_damage": 268.22,
+    "roof_maintenance_services": 118.76,
+    "commercial_roofing_kc": 146.48
+  },
+  {
+    "date": "2025-05-26",
+    "roofmaxx_kc_roof_restoration": 366.8,
+    "kc_roof_restoration": 213.2,
+    "roofmaxx_storm_damage": 475.2,
+    "roof_maintenance_services": 178.26,
+    "commercial_roofing_kc": 218.61
+  },
+  {
+    "date": "2025-05-27",
+    "roofmaxx_kc_roof_restoration": 353.04,
+    "kc_roof_restoration": 224.04,
+    "roofmaxx_storm_damage": 412.48,
+    "roof_maintenance_services": 190.11,
+    "commercial_roofing_kc": 291.01
+  },
+  {
+    "date": "2025-05-28",
+    "roofmaxx_kc_roof_restoration": 378.52,
+    "kc_roof_restoration": 226.86,
+    "roofmaxx_storm_damage": 484.09,
+    "roof_maintenance_services": 165.18,
+    "commercial_roofing_kc": 252.53
+  },
+  {
+    "date": "2025-05-29",
+    "roofmaxx_kc_roof_restoration": 156.24,
+    "kc_roof_restoration": 142.19,
+    "roofmaxx_storm_damage": 224.94,
+    "roof_maintenance_services": 107.16,
+    "commercial_roofing_kc": 135.58
+  },
+  {
+    "date": "2025-05-30",
+    "roofmaxx_kc_roof_restoration": 171.47,
+    "kc_roof_restoration": 120.76,
+    "roofmaxx_storm_damage": 182.59,
+    "roof_maintenance_services": 89.05,
+    "commercial_roofing_kc": 133.34
+  },
+  {
+    "date": "2025-05-31",
+    "roofmaxx_kc_roof_restoration": 104.11,
+    "kc_roof_restoration": 83.76,
+    "roofmaxx_storm_damage": 165.65,
+    "roof_maintenance_services": 64.38,
+    "commercial_roofing_kc": 93.87
+  },
+  {
+    "date": "2025-06-01",
+    "roofmaxx_kc_roof_restoration": 113.95,
+    "kc_roof_restoration": 84.2,
+    "roofmaxx_storm_damage": 134.0,
+    "roof_maintenance_services": 65.62,
+    "commercial_roofing_kc": 90.11
+  },
+  {
+    "date": "2025-06-02",
+    "roofmaxx_kc_roof_restoration": 203.89,
+    "kc_roof_restoration": 141.6,
+    "roofmaxx_storm_damage": 240.8,
+    "roof_maintenance_services": 107.82,
+    "commercial_roofing_kc": 142.48
+  },
+  {
+    "date": "2025-06-03",
+    "roofmaxx_kc_roof_restoration": 189.24,
+    "kc_roof_restoration": 134.87,
+    "roofmaxx_storm_damage": 227.6,
+    "roof_maintenance_services": 101.23,
+    "commercial_roofing_kc": 141.45
+  },
+  {
+    "date": "2025-06-04",
+    "roofmaxx_kc_roof_restoration": 175.29,
+    "kc_roof_restoration": 100.41,
+    "roofmaxx_storm_damage": 273.36,
+    "roof_maintenance_services": 103.08,
+    "commercial_roofing_kc": 157.52
+  },
+  {
+    "date": "2025-06-05",
+    "roofmaxx_kc_roof_restoration": 208.34,
+    "kc_roof_restoration": 100.75,
+    "roofmaxx_storm_damage": 228.79,
+    "roof_maintenance_services": 108.22,
+    "commercial_roofing_kc": 134.19
+  },
+  {
+    "date": "2025-06-06",
+    "roofmaxx_kc_roof_restoration": 205.38,
+    "kc_roof_restoration": 106.93,
+    "roofmaxx_storm_damage": 207.38,
+    "roof_maintenance_services": 98.44,
+    "commercial_roofing_kc": 166.45
+  },
+  {
+    "date": "2025-06-07",
+    "roofmaxx_kc_roof_restoration": 119.56,
+    "kc_roof_restoration": 71.15,
+    "roofmaxx_storm_damage": 178.07,
+    "roof_maintenance_services": 65.13,
+    "commercial_roofing_kc": 109.86
+  },
+  {
+    "date": "2025-06-08",
+    "roofmaxx_kc_roof_restoration": 123.21,
+    "kc_roof_restoration": 87.69,
+    "roofmaxx_storm_damage": 138.98,
+    "roof_maintenance_services": 66.46,
+    "commercial_roofing_kc": 107.43
+  },
+  {
+    "date": "2025-06-09",
+    "roofmaxx_kc_roof_restoration": 210.02,
+    "kc_roof_restoration": 99.64,
+    "roofmaxx_storm_damage": 212.87,
+    "roof_maintenance_services": 102.94,
+    "commercial_roofing_kc": 128.47
+  },
+  {
+    "date": "2025-06-10",
+    "roofmaxx_kc_roof_restoration": 167.79,
+    "kc_roof_restoration": 129.02,
+    "roofmaxx_storm_damage": 258.82,
+    "roof_maintenance_services": 106.4,
+    "commercial_roofing_kc": 165.79
+  },
+  {
+    "date": "2025-06-11",
+    "roofmaxx_kc_roof_restoration": 206.36,
+    "kc_roof_restoration": 120.26,
+    "roofmaxx_storm_damage": 228.7,
+    "roof_maintenance_services": 107.25,
+    "commercial_roofing_kc": 151.94
+  },
+  {
+    "date": "2025-06-12",
+    "roofmaxx_kc_roof_restoration": 204.59,
+    "kc_roof_restoration": 102.1,
+    "roofmaxx_storm_damage": 253.85,
+    "roof_maintenance_services": 106.4,
+    "commercial_roofing_kc": 125.6
+  },
+  {
+    "date": "2025-06-13",
+    "roofmaxx_kc_roof_restoration": 195.99,
+    "kc_roof_restoration": 137.65,
+    "roofmaxx_storm_damage": 203.05,
+    "roof_maintenance_services": 91.38,
+    "commercial_roofing_kc": 138.44
+  },
+  {
+    "date": "2025-06-14",
+    "roofmaxx_kc_roof_restoration": 129.53,
+    "kc_roof_restoration": 87.67,
+    "roofmaxx_storm_damage": 125.37,
+    "roof_maintenance_services": 73.07,
+    "commercial_roofing_kc": 94.95
+  },
+  {
+    "date": "2025-06-15",
+    "roofmaxx_kc_roof_restoration": 108.81,
+    "kc_roof_restoration": 80.88,
+    "roofmaxx_storm_damage": 188.45,
+    "roof_maintenance_services": 71.97,
+    "commercial_roofing_kc": 112.51
+  },
+  {
+    "date": "2025-06-16",
+    "roofmaxx_kc_roof_restoration": 197.66,
+    "kc_roof_restoration": 113.71,
+    "roofmaxx_storm_damage": 206.67,
+    "roof_maintenance_services": 92.06,
+    "commercial_roofing_kc": 144.44
+  },
+  {
+    "date": "2025-06-17",
+    "roofmaxx_kc_roof_restoration": 185.51,
+    "kc_roof_restoration": 119.7,
+    "roofmaxx_storm_damage": 243.62,
+    "roof_maintenance_services": 97.1,
+    "commercial_roofing_kc": 133.83
+  },
+  {
+    "date": "2025-06-18",
+    "roofmaxx_kc_roof_restoration": 171.51,
+    "kc_roof_restoration": 104.22,
+    "roofmaxx_storm_damage": 208.16,
+    "roof_maintenance_services": 95.85,
+    "commercial_roofing_kc": 158.87
+  },
+  {
+    "date": "2025-06-19",
+    "roofmaxx_kc_roof_restoration": 181.39,
+    "kc_roof_restoration": 145.05,
+    "roofmaxx_storm_damage": 198.58,
+    "roof_maintenance_services": 91.66,
+    "commercial_roofing_kc": 124.96
+  },
+  {
+    "date": "2025-06-20",
+    "roofmaxx_kc_roof_restoration": 190.61,
+    "kc_roof_restoration": 143.31,
+    "roofmaxx_storm_damage": 236.84,
+    "roof_maintenance_services": 109.27,
+    "commercial_roofing_kc": 150.1
+  },
+  {
+    "date": "2025-06-21",
+    "roofmaxx_kc_roof_restoration": 141.77,
+    "kc_roof_restoration": 72.57,
+    "roofmaxx_storm_damage": 129.86,
+    "roof_maintenance_services": 68.64,
+    "commercial_roofing_kc": 100.08
+  },
+  {
+    "date": "2025-06-22",
+    "roofmaxx_kc_roof_restoration": 247.38,
+    "kc_roof_restoration": 142.15,
+    "roofmaxx_storm_damage": 353.69,
+    "roof_maintenance_services": 128.92,
+    "commercial_roofing_kc": 149.91
+  },
+  {
+    "date": "2025-06-23",
+    "roofmaxx_kc_roof_restoration": 380.04,
+    "kc_roof_restoration": 263.24,
+    "roofmaxx_storm_damage": 376.94,
+    "roof_maintenance_services": 185.09,
+    "commercial_roofing_kc": 251.44
+  },
+  {
+    "date": "2025-06-24",
+    "roofmaxx_kc_roof_restoration": 384.53,
+    "kc_roof_restoration": 214.65,
+    "roofmaxx_storm_damage": 399.91,
+    "roof_maintenance_services": 177.34,
+    "commercial_roofing_kc": 266.16
+  },
+  {
+    "date": "2025-06-25",
+    "roofmaxx_kc_roof_restoration": 369.25,
+    "kc_roof_restoration": 178.86,
+    "roofmaxx_storm_damage": 517.12,
+    "roof_maintenance_services": 164.07,
+    "commercial_roofing_kc": 301.59
+  },
+  {
+    "date": "2025-06-26",
+    "roofmaxx_kc_roof_restoration": 316.49,
+    "kc_roof_restoration": 181.49,
+    "roofmaxx_storm_damage": 410.83,
+    "roof_maintenance_services": 183.14,
+    "commercial_roofing_kc": 305.24
+  },
+  {
+    "date": "2025-06-27",
+    "roofmaxx_kc_roof_restoration": 304.87,
+    "kc_roof_restoration": 205.32,
+    "roofmaxx_storm_damage": 385.72,
+    "roof_maintenance_services": 197.56,
+    "commercial_roofing_kc": 309.91
+  },
+  {
+    "date": "2025-06-28",
+    "roofmaxx_kc_roof_restoration": 140.14,
+    "kc_roof_restoration": 92.79,
+    "roofmaxx_storm_damage": 134.28,
+    "roof_maintenance_services": 72.39,
+    "commercial_roofing_kc": 115.42
+  },
+  {
+    "date": "2025-06-29",
+    "roofmaxx_kc_roof_restoration": 106.91,
+    "kc_roof_restoration": 84.0,
+    "roofmaxx_storm_damage": 186.34,
+    "roof_maintenance_services": 65.29,
+    "commercial_roofing_kc": 96.68
+  },
+  {
+    "date": "2025-06-30",
+    "roofmaxx_kc_roof_restoration": 177.48,
+    "kc_roof_restoration": 118.0,
+    "roofmaxx_storm_damage": 224.01,
+    "roof_maintenance_services": 107.6,
+    "commercial_roofing_kc": 173.08
+  },
+  {
+    "date": "2025-07-01",
+    "roofmaxx_kc_roof_restoration": 211.52,
+    "kc_roof_restoration": 135.97,
+    "roofmaxx_storm_damage": 178.14,
+    "roof_maintenance_services": 97.07,
+    "commercial_roofing_kc": 158.73
+  },
+  {
+    "date": "2025-07-02",
+    "roofmaxx_kc_roof_restoration": 160.51,
+    "kc_roof_restoration": 146.37,
+    "roofmaxx_storm_damage": 226.47,
+    "roof_maintenance_services": 100.08,
+    "commercial_roofing_kc": 152.76
+  },
+  {
+    "date": "2025-07-03",
+    "roofmaxx_kc_roof_restoration": 172.12,
+    "kc_roof_restoration": 116.72,
+    "roofmaxx_storm_damage": 227.75,
+    "roof_maintenance_services": 95.27,
+    "commercial_roofing_kc": 158.44
+  },
+  {
+    "date": "2025-07-04",
+    "roofmaxx_kc_roof_restoration": 210.87,
+    "kc_roof_restoration": 108.36,
+    "roofmaxx_storm_damage": 279.37,
+    "roof_maintenance_services": 105.69,
+    "commercial_roofing_kc": 166.71
+  },
+  {
+    "date": "2025-07-05",
+    "roofmaxx_kc_roof_restoration": 129.8,
+    "kc_roof_restoration": 78.58,
+    "roofmaxx_storm_damage": 151.07,
+    "roof_maintenance_services": 64.5,
+    "commercial_roofing_kc": 109.44
+  },
+  {
+    "date": "2025-07-06",
+    "roofmaxx_kc_roof_restoration": 113.51,
+    "kc_roof_restoration": 95.45,
+    "roofmaxx_storm_damage": 125.5,
+    "roof_maintenance_services": 64.25,
+    "commercial_roofing_kc": 95.44
+  },
+  {
+    "date": "2025-07-07",
+    "roofmaxx_kc_roof_restoration": 197.54,
+    "kc_roof_restoration": 109.35,
+    "roofmaxx_storm_damage": 202.69,
+    "roof_maintenance_services": 101.77,
+    "commercial_roofing_kc": 139.05
+  },
+  {
+    "date": "2025-07-08",
+    "roofmaxx_kc_roof_restoration": 200.01,
+    "kc_roof_restoration": 116.62,
+    "roofmaxx_storm_damage": 197.18,
+    "roof_maintenance_services": 111.32,
+    "commercial_roofing_kc": 124.59
+  },
+  {
+    "date": "2025-07-09",
+    "roofmaxx_kc_roof_restoration": 214.99,
+    "kc_roof_restoration": 141.16,
+    "roofmaxx_storm_damage": 283.66,
+    "roof_maintenance_services": 108.88,
+    "commercial_roofing_kc": 170.24
+  },
+  {
+    "date": "2025-07-10",
+    "roofmaxx_kc_roof_restoration": 179.83,
+    "kc_roof_restoration": 100.94,
+    "roofmaxx_storm_damage": 223.61,
+    "roof_maintenance_services": 112.7,
+    "commercial_roofing_kc": 158.42
+  },
+  {
+    "date": "2025-07-11",
+    "roofmaxx_kc_roof_restoration": 205.55,
+    "kc_roof_restoration": 120.01,
+    "roofmaxx_storm_damage": 231.12,
+    "roof_maintenance_services": 94.74,
+    "commercial_roofing_kc": 157.42
+  },
+  {
+    "date": "2025-07-12",
+    "roofmaxx_kc_roof_restoration": 115.39,
+    "kc_roof_restoration": 73.83,
+    "roofmaxx_storm_damage": 125.0,
+    "roof_maintenance_services": 67.02,
+    "commercial_roofing_kc": 82.98
+  },
+  {
+    "date": "2025-07-13",
+    "roofmaxx_kc_roof_restoration": 131.0,
+    "kc_roof_restoration": 86.98,
+    "roofmaxx_storm_damage": 152.1,
+    "roof_maintenance_services": 70.71,
+    "commercial_roofing_kc": 100.18
+  },
+  {
+    "date": "2025-07-14",
+    "roofmaxx_kc_roof_restoration": 189.54,
+    "kc_roof_restoration": 134.73,
+    "roofmaxx_storm_damage": 274.48,
+    "roof_maintenance_services": 107.38,
+    "commercial_roofing_kc": 140.45
+  },
+  {
+    "date": "2025-07-15",
+    "roofmaxx_kc_roof_restoration": 187.2,
+    "kc_roof_restoration": 129.7,
+    "roofmaxx_storm_damage": 272.76,
+    "roof_maintenance_services": 111.15,
+    "commercial_roofing_kc": 153.21
+  },
+  {
+    "date": "2025-07-16",
+    "roofmaxx_kc_roof_restoration": 214.41,
+    "kc_roof_restoration": 125.25,
+    "roofmaxx_storm_damage": 245.96,
+    "roof_maintenance_services": 94.75,
+    "commercial_roofing_kc": 166.46
+  },
+  {
+    "date": "2025-07-17",
+    "roofmaxx_kc_roof_restoration": 193.54,
+    "kc_roof_restoration": 105.63,
+    "roofmaxx_storm_damage": 267.28,
+    "roof_maintenance_services": 111.04,
+    "commercial_roofing_kc": 169.03
+  },
+  {
+    "date": "2025-07-18",
+    "roofmaxx_kc_roof_restoration": 212.94,
+    "kc_roof_restoration": 134.61,
+    "roofmaxx_storm_damage": 195.76,
+    "roof_maintenance_services": 93.64,
+    "commercial_roofing_kc": 154.95
+  },
+  {
+    "date": "2025-07-19",
+    "roofmaxx_kc_roof_restoration": 141.91,
+    "kc_roof_restoration": 97.32,
+    "roofmaxx_storm_damage": 144.94,
+    "roof_maintenance_services": 64.39,
+    "commercial_roofing_kc": 108.7
+  },
+  {
+    "date": "2025-07-20",
+    "roofmaxx_kc_roof_restoration": 143.39,
+    "kc_roof_restoration": 98.24,
+    "roofmaxx_storm_damage": 185.06,
+    "roof_maintenance_services": 67.6,
+    "commercial_roofing_kc": 107.9
+  },
+  {
+    "date": "2025-07-21",
+    "roofmaxx_kc_roof_restoration": 181.88,
+    "kc_roof_restoration": 132.48,
+    "roofmaxx_storm_damage": 265.48,
+    "roof_maintenance_services": 107.41,
+    "commercial_roofing_kc": 164.71
+  },
+  {
+    "date": "2025-07-22",
+    "roofmaxx_kc_roof_restoration": 208.04,
+    "kc_roof_restoration": 114.48,
+    "roofmaxx_storm_damage": 267.85,
+    "roof_maintenance_services": 101.67,
+    "commercial_roofing_kc": 153.17
+  },
+  {
+    "date": "2025-07-23",
+    "roofmaxx_kc_roof_restoration": 187.9,
+    "kc_roof_restoration": 110.16,
+    "roofmaxx_storm_damage": 233.34,
+    "roof_maintenance_services": 109.54,
+    "commercial_roofing_kc": 154.18
+  },
+  {
+    "date": "2025-07-24",
+    "roofmaxx_kc_roof_restoration": 196.18,
+    "kc_roof_restoration": 131.75,
+    "roofmaxx_storm_damage": 274.11,
+    "roof_maintenance_services": 99.29,
+    "commercial_roofing_kc": 167.65
+  },
+  {
+    "date": "2025-07-25",
+    "roofmaxx_kc_roof_restoration": 206.37,
+    "kc_roof_restoration": 143.12,
+    "roofmaxx_storm_damage": 214.52,
+    "roof_maintenance_services": 103.01,
+    "commercial_roofing_kc": 157.41
+  },
+  {
+    "date": "2025-07-26",
+    "roofmaxx_kc_roof_restoration": 133.85,
+    "kc_roof_restoration": 98.15,
+    "roofmaxx_storm_damage": 164.24,
+    "roof_maintenance_services": 75.98,
+    "commercial_roofing_kc": 112.5
+  },
+  {
+    "date": "2025-07-27",
+    "roofmaxx_kc_roof_restoration": 141.59,
+    "kc_roof_restoration": 80.15,
+    "roofmaxx_storm_damage": 193.71,
+    "roof_maintenance_services": 64.17,
+    "commercial_roofing_kc": 83.38
+  },
+  {
+    "date": "2025-07-28",
+    "roofmaxx_kc_roof_restoration": 168.47,
+    "kc_roof_restoration": 139.83,
+    "roofmaxx_storm_damage": 266.52,
+    "roof_maintenance_services": 103.66,
+    "commercial_roofing_kc": 160.77
+  },
+  {
+    "date": "2025-07-29",
+    "roofmaxx_kc_roof_restoration": 204.81,
+    "kc_roof_restoration": 143.85,
+    "roofmaxx_storm_damage": 283.67,
+    "roof_maintenance_services": 100.6,
+    "commercial_roofing_kc": 174.97
+  },
+  {
+    "date": "2025-07-30",
+    "roofmaxx_kc_roof_restoration": 205.93,
+    "kc_roof_restoration": 133.0,
+    "roofmaxx_storm_damage": 243.13,
+    "roof_maintenance_services": 98.22,
+    "commercial_roofing_kc": 154.8
+  },
+  {
+    "date": "2025-07-31",
+    "roofmaxx_kc_roof_restoration": 204.13,
+    "kc_roof_restoration": 127.88,
+    "roofmaxx_storm_damage": 281.13,
+    "roof_maintenance_services": 107.86,
+    "commercial_roofing_kc": 149.87
+  },
+  {
+    "date": "2025-08-01",
+    "roofmaxx_kc_roof_restoration": 217.49,
+    "kc_roof_restoration": 108.25,
+    "roofmaxx_storm_damage": 190.07,
+    "roof_maintenance_services": 114.22,
+    "commercial_roofing_kc": 144.26
+  }
+];
+        const chartConfig = {"title": "Google Ads Spend by Campaign", "subtitle": "Daily spend breakdown across all active campaigns", "yLabel": "Daily Spend ($)", "xLabel": "Date"};
+        
+        // Initialize the chart with data
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeChart(chartData, chartConfig);
+            console.log("📊 Google Ads chart initialized with {} data points".replace('{}', chartData.length));
+        });
+    
+    </script>
+</body>
+</html>

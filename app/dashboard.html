@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocalBase Dashboard Demo</title>
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* LocalBase color palette adapted from Tide */
+            --lb-blue: #5F8DFF;
+            --lb-blue-dark: #3A6FE3;
+            --lb-blue-light: #7BA4FF;
+            --lb-black: #1E1E2E;
+            --lb-gray-dark: #2A2A3C;
+            --lb-gray-medium: #383850;
+            --lb-gray-light: #4A4A65;
+            --lb-green: #5DD6C7;
+            --lb-green-light: #7FEDDF;
+            --lb-white: #FFFFFF;
+            --lb-orange: #FFB366;
+            --lb-purple: #B794F6;
+            
+            /* UI palette */
+            --background-dark: var(--lb-black);
+            --background-sidebar: #252538;
+            --text-color: var(--lb-white);
+            --secondary-text: #B8B8D0;
+            --border-color: #404060;
+            --input-background: var(--lb-gray-dark);
+            --primary-color: var(--lb-blue);
+            --primary-hover: var(--lb-blue-light);
+            --accent-color: var(--lb-green);
+            --success-color: var(--lb-green);
+            --warning-color: var(--lb-orange);
+            --info-color: var(--lb-purple);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: var(--background-dark);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background-color: var(--background-sidebar);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+
+        .logo:hover {
+            opacity: 0.8;
+        }
+
+        .logo .highlight {
+            color: var(--primary-color);
+        }
+
+        .nav-items {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-item {
+            color: var(--secondary-text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-item:hover {
+            color: var(--text-color);
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+
+        /* Main Layout */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* Dashboard-specific styles */
+        .dashboard-header {
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .dashboard-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 8px;
+        }
+
+        .dashboard-subtitle {
+            color: var(--secondary-text);
+            font-size: 18px;
+            margin-bottom: 16px;
+        }
+
+        .dashboard-meta {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--secondary-text);
+            font-size: 14px;
+        }
+
+        .meta-icon {
+            color: var(--primary-color);
+        }
+
+        /* Dashboard Controls */
+        .dashboard-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 16px 20px;
+            background-color: var(--lb-gray-dark);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .control-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--secondary-text);
+        }
+
+        .control-select, .control-input {
+            background-color: var(--lb-gray-medium);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-color);
+            padding: 8px 12px;
+            font-size: 14px;
+            min-width: 150px;
+        }
+
+        .control-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background-color: var(--primary-color);
+            color: var(--lb-white);
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .control-button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .control-button.secondary {
+            background-color: var(--lb-gray-medium);
+        }
+
+        .control-button.secondary:hover {
+            background-color: var(--lb-gray-light);
+        }
+
+        /* Widget Grid */
+        .widget-grid {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .grid-auto {
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        }
+
+        .grid-2x1 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        /* Widget Cards */
+        .widget {
+            background-color: var(--lb-gray-dark);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .widget:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .widget.large {
+            grid-column: span 2;
+        }
+
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .widget-title h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 4px;
+        }
+
+        .widget-title p {
+            color: var(--secondary-text);
+            font-size: 13px;
+        }
+
+        .widget-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .widget-action {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--lb-gray-medium);
+            border: none;
+            border-radius: 6px;
+            color: var(--secondary-text);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .widget-action:hover {
+            background-color: var(--lb-gray-light);
+            color: var(--text-color);
+        }
+
+        .widget-content {
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Metric Widgets */
+        .metric-widget {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .metric-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: var(--secondary-text);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .metric-change {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .metric-change.positive {
+            color: var(--success-color);
+        }
+
+        .metric-change.negative {
+            color: var(--warning-color);
+        }
+
+        .metric-change.neutral {
+            color: var(--secondary-text);
+        }
+
+        /* Chart Widgets */
+        .chart-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            color: var(--secondary-text);
+            font-size: 14px;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chart-placeholder i {
+            font-size: 48px;
+            color: var(--primary-color);
+        }
+
+        /* List Widgets */
+        .list-widget {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-item-content {
+            flex: 1;
+        }
+
+        .list-item-title {
+            font-weight: 500;
+            color: var(--text-color);
+            margin-bottom: 4px;
+        }
+
+        .list-item-subtitle {
+            font-size: 12px;
+            color: var(--secondary-text);
+        }
+
+        .list-item-value {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        /* Status Indicators */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background-color: rgba(93, 214, 199, 0.2);
+            color: var(--success-color);
+        }
+
+        .status-warning {
+            background-color: rgba(255, 179, 102, 0.2);
+            color: var(--warning-color);
+        }
+
+        .status-info {
+            background-color: rgba(183, 148, 246, 0.2);
+            color: var(--info-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard-controls {
+                flex-direction: column;
+                gap: 16px;
+                align-items: stretch;
+            }
+            
+            .grid-2x1 {
+                grid-template-columns: 1fr;
+            }
+            
+            .widget.large {
+                grid-column: span 1;
+            }
+            
+            .dashboard-meta {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="gallery.html" class="logo" style="text-decoration: none;">
+                Local<span class="highlight">Base</span>
+            </a>
+            <nav class="nav-items">
+                <a href="#" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    Dashboard
+                </a>
+                <a href="#" class="nav-item active">
+                    <i class="fas fa-chart-bar"></i>
+                    Analytics
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-database"></i>
+                    Data
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">LocalBase Business Intelligence</h1>
+            <p class="dashboard-subtitle">Real-time business analytics and performance metrics</p>
+            
+            <div class="dashboard-meta">
+                <div class="meta-item">
+                    <i class="fas fa-clock meta-icon"></i>
+                    <span>Last updated: 2 minutes ago</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-database meta-icon"></i>
+                    <span>Data sources: 4</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-chart-line meta-icon"></i>
+                    <span>Active widgets: 8</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-controls">
+            <div class="control-group">
+                <span class="control-label">Time Range:</span>
+                <select class="control-select" id="timeRangeSelect">
+                    <option value="24h">Last 24 Hours</option>
+                    <option value="7d" selected>Last 7 Days</option>
+                    <option value="30d">Last 30 Days</option>
+                    <option value="90d">Last 90 Days</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <button class="control-button" id="refreshDashboard">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh All
+                </button>
+                <button class="control-button secondary" id="exportDashboard">
+                    <i class="fas fa-download"></i>
+                    Export
+                </button>
+                <button class="control-button secondary" id="configureDashboard">
+                    <i class="fas fa-cog"></i>
+                    Configure
+                </button>
+            </div>
+        </div>
+        
+        <!-- Main Metrics Row -->
+        <div class="widget-grid grid-auto">
+            <div class="widget">
+                <div class="widget-content metric-widget">
+                    <div class="metric-value">2,847</div>
+                    <div class="metric-label">Total Deals</div>
+                    <div class="metric-change positive">
+                        <i class="fas fa-arrow-up"></i> +12.5%
+                    </div>
+                </div>
+            </div>
+            
+            <div class="widget">
+                <div class="widget-content metric-widget">
+                    <div class="metric-value">$485K</div>
+                    <div class="metric-label">Monthly Revenue</div>
+                    <div class="metric-change positive">
+                        <i class="fas fa-arrow-up"></i> +8.3%
+                    </div>
+                </div>
+            </div>
+            
+            <div class="widget">
+                <div class="widget-content metric-widget">
+                    <div class="metric-value">24.8%</div>
+                    <div class="metric-label">Conversion Rate</div>
+                    <div class="metric-change negative">
+                        <i class="fas fa-arrow-down"></i> -2.1%
+                    </div>
+                </div>
+            </div>
+            
+            <div class="widget">
+                <div class="widget-content metric-widget">
+                    <div class="metric-value">156</div>
+                    <div class="metric-label">Active Deals</div>
+                    <div class="metric-change neutral">
+                        <i class="fas fa-minus"></i> No change
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Row -->
+        <div class="widget-grid grid-2x1">
+            <div class="widget large">
+                <div class="widget-header">
+                    <div class="widget-title">
+                        <h3>Deals Overview</h3>
+                        <p>Monthly deal distribution by type</p>
+                    </div>
+                    <div class="widget-actions">
+                        <button class="widget-action" title="Refresh">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="widget-action" title="Settings">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="widget-content">
+                    <div class="chart-placeholder">
+                        <i class="fas fa-chart-pie"></i>
+                        <div>Interactive D3.js Chart</div>
+                        <div style="font-size: 12px;">Click "View Live Demo" to see working chart</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="widget">
+                <div class="widget-header">
+                    <div class="widget-title">
+                        <h3>Revenue Trend</h3>
+                        <p>Last 12 months</p>
+                    </div>
+                    <div class="widget-actions">
+                        <button class="widget-action" title="Refresh">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="widget-action" title="Settings">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="widget-content">
+                    <div class="chart-placeholder">
+                        <i class="fas fa-chart-line"></i>
+                        <div>Line Chart Ready</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Data Lists Row -->
+        <div class="widget-grid grid-2x1">
+            <div class="widget">
+                <div class="widget-header">
+                    <div class="widget-title">
+                        <h3>Recent Deals</h3>
+                        <p>Latest activity</p>
+                    </div>
+                    <div class="widget-actions">
+                        <button class="widget-action" title="View All">
+                            <i class="fas fa-external-link-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="widget-content list-widget">
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <div class="list-item-title">Deal #1000</div>
+                            <div class="list-item-subtitle">
+                                <span class="status-indicator status-success">
+                                    <i class="fas fa-circle"></i>
+                                    Active
+                                </span>
+                            </div>
+                        </div>
+                        <div class="list-item-value">$5,000</div>
+                    </div>
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <div class="list-item-title">Deal #1001</div>
+                            <div class="list-item-subtitle">
+                                <span class="status-indicator status-warning">
+                                    <i class="fas fa-circle"></i>
+                                    Pending
+                                </span>
+                            </div>
+                        </div>
+                        <div class="list-item-value">$6,500</div>
+                    </div>
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <div class="list-item-title">Deal #1002</div>
+                            <div class="list-item-subtitle">
+                                <span class="status-indicator status-info">
+                                    <i class="fas fa-circle"></i>
+                                    Review
+                                </span>
+                            </div>
+                        </div>
+                        <div class="list-item-value">$8,000</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="widget">
+                <div class="widget-header">
+                    <div class="widget-title">
+                        <h3>Top Sources</h3>
+                        <p>Lead generation performance</p>
+                    </div>
+                    <div class="widget-actions">
+                        <button class="widget-action" title="View Details">
+                            <i class="fas fa-chart-bar"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="widget-content list-widget">
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <div class="list-item-title">Direct</div>
+                            <div class="list-item-subtitle">
+                                <span class="status-indicator status-success">
+                                    <i class="fas fa-circle"></i>
+                                    High
+                                </span>
+                            </div>
+                        </div>
+                        <div class="list-item-value">342</div>
+                    </div>
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <div class="list-item-title">Referral</div>
+                            <div class="list-item-subtitle">
+                                <span class="status-indicator status-success">
+                                    <i class="fas fa-circle"></i>
+                                    High
+                                </span>
+                            </div>
+                        </div>
+                        <div class="list-item-value">289</div>
+                    </div>
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <div class="list-item-title">Social Media</div>
+                            <div class="list-item-subtitle">
+                                <span class="status-indicator status-info">
+                                    <i class="fas fa-circle"></i>
+                                    Medium
+                                </span>
+                            </div>
+                        </div>
+                        <div class="list-item-value">156</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="gallery.html" class="control-button" style="text-decoration: none; font-size: 16px; padding: 12px 24px;">
+                <i class="fas fa-layer-group"></i>
+                View Template Gallery
+            </a>
+        </div>
+    </main>
+
+    <script>
+        // Dashboard functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Refresh button animation
+            const refreshBtn = document.getElementById('refreshDashboard');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', function() {
+                    const icon = this.querySelector('i');
+                    icon.classList.add('fa-spin');
+                    setTimeout(() => {
+                        icon.classList.remove('fa-spin');
+                    }, 1000);
+                });
+            }
+
+            // Animate metrics on load
+            const metricValues = document.querySelectorAll('.metric-value');
+            metricValues.forEach((metric, index) => {
+                metric.style.opacity = '0';
+                metric.style.transform = 'translateY(10px)';
+                
+                setTimeout(() => {
+                    metric.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    metric.style.opacity = '1';
+                    metric.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

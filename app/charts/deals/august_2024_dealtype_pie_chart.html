@@ -1,0 +1,185 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>August 2024 Deals by Deal Type</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 20px;
+                background-color: #f5f5f5;
+            }
+            .container {
+                background-color: white;
+                padding: 30px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                max-width: 1000px;
+                margin: 0 auto;
+            }
+            h1 {
+                color: #333;
+                text-align: center;
+                margin-bottom: 10px;
+            }
+            .summary {
+                text-align: center;
+                color: #666;
+                margin-bottom: 30px;
+                font-size: 18px;
+            }
+            .chart-container {
+                position: relative;
+                height: 500px;
+                margin: 20px 0;
+            }
+            .stats-table {
+                margin-top: 30px;
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .stats-table th, .stats-table td {
+                border: 1px solid #ddd;
+                padding: 12px;
+                text-align: left;
+            }
+            .stats-table th {
+                background-color: #4CAF50;
+                color: white;
+            }
+            .stats-table tr:nth-child(even) {
+                background-color: #f2f2f2;
+            }
+            .color-box {
+                width: 20px;
+                height: 20px;
+                display: inline-block;
+                margin-right: 10px;
+                border: 1px solid #ccc;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>August 2024 Deals by Deal Type</h1>
+            <div class="summary">Total deals: 22 | Unique deal types: 6</div>
+            
+            <div class="chart-container">
+                <canvas id="dealTypeChart"></canvas>
+            </div>
+            
+            <table class="stats-table">
+                <thead>
+                    <tr>
+                        <th>Deal Type</th>
+                        <th>Count</th>
+                        <th>Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+    
+                    <tr>
+                        <td><span class="color-box" style="background-color: #FF6384;"></span>NAP-L</td>
+                        <td>10</td>
+                        <td>45.5%</td>
+                    </tr>
+        
+                    <tr>
+                        <td><span class="color-box" style="background-color: #36A2EB;"></span>SG</td>
+                        <td>5</td>
+                        <td>22.7%</td>
+                    </tr>
+        
+                    <tr>
+                        <td><span class="color-box" style="background-color: #FFCE56;"></span>GRML</td>
+                        <td>4</td>
+                        <td>18.2%</td>
+                    </tr>
+        
+                    <tr>
+                        <td><span class="color-box" style="background-color: #4BC0C0;"></span>MICRO</td>
+                        <td>1</td>
+                        <td>4.5%</td>
+                    </tr>
+        
+                    <tr>
+                        <td><span class="color-box" style="background-color: #9966FF;"></span>RMCL</td>
+                        <td>1</td>
+                        <td>4.5%</td>
+                    </tr>
+        
+                    <tr>
+                        <td><span class="color-box" style="background-color: #FF9F40;"></span>NAP</td>
+                        <td>1</td>
+                        <td>4.5%</td>
+                    </tr>
+        
+                </tbody>
+            </table>
+        </div>
+
+        <script>
+            const ctx = document.getElementById('dealTypeChart').getContext('2d');
+            const dealTypeChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ["NAP-L", "SG", "GRML", "MICRO", "RMCL", "NAP"],
+                    datasets: [{
+                        data: [10, 5, 4, 1, 1, 1],
+                        backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40"],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Distribution of Deal Types - August 2024',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        legend: {
+                            display: true,
+                            position: 'right',
+                            labels: {
+                                generateLabels: function(chart) {
+                                    const data = chart.data;
+                                    if (data.labels.length && data.datasets.length) {
+                                        const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                        return data.labels.map((label, i) => {
+                                            const count = data.datasets[0].data[i];
+                                            const percentage = ((count / total) * 100).toFixed(1);
+                                            return {
+                                                text: `${label} (${count} - ${percentage}%)`,
+                                                fillStyle: data.datasets[0].backgroundColor[i],
+                                                strokeStyle: '#fff',
+                                                lineWidth: 2,
+                                                index: i
+                                            };
+                                        });
+                                    }
+                                    return [];
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return context.label + ': ' + context.parsed + ' deals (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        </script>
+    </body>
+    </html>
+    

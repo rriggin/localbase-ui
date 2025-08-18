@@ -1,0 +1,456 @@
+{% extends "base.html" %}
+
+{% block title %}{{ chart_title | default("Chart") }} - LocalBase{% endblock %}
+
+{% block styles %}
+/* Chart-specific styles */
+.chart-container {
+    background-color: var(--lb-gray-dark);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.chart-header {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.chart-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 8px;
+}
+
+.chart-subtitle {
+    color: var(--secondary-text);
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.chart-meta {
+    color: var(--secondary-text);
+    font-size: 12px;
+    font-style: italic;
+}
+
+.chart-content {
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-svg {
+    max-width: 100%;
+    height: auto;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+}
+
+/* Chart Controls */
+.chart-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--lb-gray-medium);
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+.control-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--secondary-text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.control-select {
+    background-color: var(--lb-gray-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color);
+    padding: 6px 10px;
+    font-size: 14px;
+    min-width: 120px;
+}
+
+.control-button {
+    background-color: var(--primary-color);
+    color: var(--lb-white);
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.control-button:hover {
+    background-color: var(--primary-hover);
+}
+
+.control-button.secondary {
+    background-color: var(--lb-gray-medium);
+}
+
+.control-button.secondary:hover {
+    background-color: var(--lb-gray-light);
+}
+
+/* Chart Legend */
+.chart-legend {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+    padding: 16px;
+    background-color: var(--lb-gray-medium);
+    border-radius: 8px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-color);
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.legend-label {
+    font-weight: 500;
+}
+
+.legend-value {
+    color: var(--secondary-text);
+    margin-left: 4px;
+}
+
+/* Chart Stats */
+.chart-stats {
+    margin-top: 20px;
+    padding: 16px;
+    background-color: var(--lb-gray-medium);
+    border-radius: 8px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--secondary-text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Tooltip Styles */
+.chart-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.9);
+    color: var(--lb-white);
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--primary-color);
+}
+
+.tooltip-content {
+    line-height: 1.4;
+}
+
+/* Loading State */
+.chart-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    color: var(--secondary-text);
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-color);
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .chart-container {
+        padding: 16px;
+    }
+    
+    .chart-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .control-group {
+        justify-content: space-between;
+    }
+    
+    .chart-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .chart-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-legend {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+{% endblock %}
+
+{% block content %}
+<div class="content-section">
+    <div class="section-header text-center">
+        <h1 class="section-title">{{ page_title | default("Data Visualization") }}</h1>
+        <p class="section-subtitle">{{ page_subtitle | default("Interactive charts and analytics") }}</p>
+    </div>
+    
+    {% if show_controls | default(true) %}
+    <div class="chart-controls">
+        {% block chart_controls %}
+        <div class="control-group">
+            <span class="control-label">View</span>
+            <select class="control-select" id="chartViewSelect">
+                <option value="default">Default</option>
+                <option value="detailed">Detailed</option>
+                <option value="summary">Summary</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <button class="control-button" id="refreshChart">
+                <i class="fas fa-sync-alt"></i>
+                Refresh
+            </button>
+            <button class="control-button secondary" id="exportChart">
+                <i class="fas fa-download"></i>
+                Export
+            </button>
+        </div>
+        {% endblock %}
+    </div>
+    {% endif %}
+    
+    <div class="chart-container">
+        <div class="chart-header">
+            <h2 class="chart-title">{{ chart_title | default("Untitled Chart") }}</h2>
+            {% if chart_subtitle %}
+            <p class="chart-subtitle">{{ chart_subtitle }}</p>
+            {% endif %}
+            {% if chart_meta %}
+            <p class="chart-meta">{{ chart_meta }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="chart-content" id="chartContent">
+            {% block chart_content %}
+            <div class="chart-loading" id="chartLoading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Loading chart data...</div>
+            </div>
+            {% endblock %}
+        </div>
+        
+        {% if show_legend | default(true) %}
+        <div class="chart-legend" id="chartLegend">
+            {% block chart_legend %}
+            <!-- Legend items will be populated by D3 -->
+            {% endblock %}
+        </div>
+        {% endif %}
+        
+        {% if show_stats | default(true) %}
+        <div class="chart-stats" id="chartStats">
+            {% block chart_stats %}
+            <!-- Stats will be populated by D3 -->
+            {% endblock %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Tooltip -->
+    <div class="chart-tooltip" id="chartTooltip">
+        <div class="tooltip-title" id="tooltipTitle"></div>
+        <div class="tooltip-content" id="tooltipContent"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+// Chart wrapper base functionality
+class LocalBaseChart {
+    constructor(containerId, config = {}) {
+        this.container = d3.select(`#${containerId}`);
+        this.config = {
+            width: 800,
+            height: 400,
+            margin: { top: 20, right: 20, bottom: 30, left: 40 },
+            ...config
+        };
+        this.tooltip = d3.select('#chartTooltip');
+        this.loading = d3.select('#chartLoading');
+    }
+    
+    showLoading() {
+        this.loading.style('display', 'flex');
+    }
+    
+    hideLoading() {
+        this.loading.style('display', 'none');
+    }
+    
+    showTooltip(content, title = '') {
+        d3.select('#tooltipTitle').text(title);
+        d3.select('#tooltipContent').html(content);
+        this.tooltip
+            .style('opacity', 1)
+            .style('left', (d3.event.pageX + 10) + 'px')
+            .style('top', (d3.event.pageY - 10) + 'px');
+    }
+    
+    hideTooltip() {
+        this.tooltip.style('opacity', 0);
+    }
+    
+    updateStats(stats) {
+        const statsContainer = d3.select('#chartStats');
+        statsContainer.selectAll('.stat-item').remove();
+        
+        Object.entries(stats).forEach(([key, value]) => {
+            const statItem = statsContainer.append('div').attr('class', 'stat-item');
+            statItem.append('div').attr('class', 'stat-value').text(value);
+            statItem.append('div').attr('class', 'stat-label').text(key);
+        });
+    }
+    
+    updateLegend(legendData) {
+        const legendContainer = d3.select('#chartLegend');
+        legendContainer.selectAll('.legend-item').remove();
+        
+        legendData.forEach(item => {
+            const legendItem = legendContainer.append('div').attr('class', 'legend-item');
+            legendItem.append('div')
+                .attr('class', 'legend-color')
+                .style('background-color', item.color);
+            legendItem.append('span')
+                .attr('class', 'legend-label')
+                .text(item.label);
+            if (item.value) {
+                legendItem.append('span')
+                    .attr('class', 'legend-value')
+                    .text(`(${item.value})`);
+            }
+        });
+    }
+}
+
+// Initialize chart controls
+document.addEventListener('DOMContentLoaded', function() {
+    // Refresh button
+    const refreshBtn = document.getElementById('refreshChart');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            if (typeof window.refreshChart === 'function') {
+                window.refreshChart();
+            }
+        });
+    }
+    
+    // Export button
+    const exportBtn = document.getElementById('exportChart');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function() {
+            if (typeof window.exportChart === 'function') {
+                window.exportChart();
+            }
+        });
+    }
+    
+    // View selector
+    const viewSelect = document.getElementById('chartViewSelect');
+    if (viewSelect) {
+        viewSelect.addEventListener('change', function() {
+            if (typeof window.changeChartView === 'function') {
+                window.changeChartView(this.value);
+            }
+        });
+    }
+});
+
+// Chart data placeholder - will be replaced by template
+{% block chart_data %}
+// const chartData = {{ chart_data | safe }};
+{% endblock %}
+
+// Chart initialization - will be replaced by specific chart implementation
+{% block chart_script %}
+console.log('LocalBase Chart Wrapper initialized');
+{% endblock %}
+</script>
+{% endblock %}

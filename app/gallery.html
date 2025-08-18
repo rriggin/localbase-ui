@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocalBase Template Gallery</title>
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* LocalBase color palette adapted from Tide */
+            --lb-blue: #5F8DFF;
+            --lb-blue-dark: #3A6FE3;
+            --lb-blue-light: #7BA4FF;
+            --lb-black: #1E1E2E;
+            --lb-gray-dark: #2A2A3C;
+            --lb-gray-medium: #383850;
+            --lb-gray-light: #4A4A65;
+            --lb-green: #5DD6C7;
+            --lb-green-light: #7FEDDF;
+            --lb-white: #FFFFFF;
+            --lb-orange: #FFB366;
+            --lb-purple: #B794F6;
+            
+            /* UI palette */
+            --background-dark: var(--lb-black);
+            --background-sidebar: #252538;
+            --text-color: var(--lb-white);
+            --secondary-text: #B8B8D0;
+            --border-color: #404060;
+            --input-background: var(--lb-gray-dark);
+            --primary-color: var(--lb-blue);
+            --primary-hover: var(--lb-blue-light);
+            --accent-color: var(--lb-green);
+            --success-color: var(--lb-green);
+            --warning-color: var(--lb-orange);
+            --info-color: var(--lb-purple);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: var(--background-dark);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background-color: var(--background-sidebar);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+
+        .logo:hover {
+            opacity: 0.8;
+        }
+
+        .logo .highlight {
+            color: var(--primary-color);
+        }
+
+        .nav-items {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-item {
+            color: var(--secondary-text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-item:hover {
+            color: var(--text-color);
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+
+        /* Main Layout */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* Page Header */
+        .page-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .page-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 16px;
+        }
+
+        .page-subtitle {
+            color: var(--secondary-text);
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Widget Grid */
+        .widget-grid {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .grid-auto {
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        }
+
+        /* Widget Cards */
+        .widget {
+            background-color: var(--lb-gray-dark);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .widget:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .widget-title h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 4px;
+        }
+
+        .widget-title p {
+            color: var(--secondary-text);
+            font-size: 13px;
+        }
+
+        .widget-content {
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .control-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background-color: var(--primary-color);
+            color: var(--lb-white);
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .control-button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* Back Navigation */
+        .back-nav {
+            margin-bottom: 32px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--secondary-text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--primary-color);
+        }
+
+        /* Template Categories */
+        .category-section {
+            margin-bottom: 48px;
+        }
+
+        .category-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .category-icon {
+            color: var(--primary-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 28px;
+            }
+            
+            .widget-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="gallery.html" class="logo" style="text-decoration: none;">
+                Local<span class="highlight">Base</span>
+            </a>
+            <nav class="nav-items">
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    App Home
+                </a>
+                <a href="dashboard.html" class="nav-item">
+                    <i class="fas fa-chart-bar"></i>
+                    Dashboard
+                </a>
+                <a href="#" class="nav-item active">
+                    <i class="fas fa-layer-group"></i>
+                    Gallery
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <div class="back-nav">
+            <a href="index.html" class="back-link">
+                <i class="fas fa-arrow-left"></i>
+                Back to App Home
+            </a>
+        </div>
+
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-layer-group category-icon"></i>
+                Template Gallery
+            </h1>
+            <p class="page-subtitle">
+                Explore our collection of business intelligence templates and interactive components. 
+                Each template is ready to use and can be customized for your specific needs.
+            </p>
+        </div>
+
+        <!-- Charts & Visualizations -->
+        <div class="category-section">
+            <h2 class="category-title">
+                <i class="fas fa-chart-pie category-icon"></i>
+                Charts & Visualizations
+            </h2>
+            
+            <div class="widget-grid grid-auto">
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <h3><i class="fas fa-chart-line"></i> Multi-Line Chart</h3>
+                            <p>Interactive time series chart with multiple data series and LocalBase styling</p>
+                        </div>
+                    </div>
+                    <div class="widget-content" style="text-align: center;">
+                        <a href="templates/multi_line_chart.html" class="control-button" style="text-decoration: none;">
+                            <i class="fas fa-chart-line"></i>
+                            View Chart Template
+                        </a>
+                    </div>
+                </div>
+
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <h3><i class="fas fa-bullhorn"></i> Google Ads Performance</h3>
+                            <p>Real Google Ads campaign data with 5 campaigns - Full year 2025 (Jan-July)</p>
+                        </div>
+                    </div>
+                    <div class="widget-content" style="text-align: center;">
+                        <a href="google_ads_complete.html" class="control-button" style="text-decoration: none;">
+                            <i class="fas fa-bullhorn"></i>
+                            View Google Ads Chart
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <h3><i class="fas fa-chart-pie"></i> Pie Chart Demo</h3>
+                            <p>Interactive D3.js pie chart with sample data and hover effects</p>
+                        </div>
+                    </div>
+                    <div class="widget-content" style="text-align: center;">
+                        <a href="demos/example_pie_chart.html" class="control-button" style="text-decoration: none;">
+                            <i class="fas fa-chart-pie"></i>
+                            View Live Chart
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <h3><i class="fas fa-chart-area"></i> Chart Wrapper</h3>
+                            <p>Flexible chart container template for D3.js visualizations</p>
+                        </div>
+                    </div>
+                    <div class="widget-content" style="text-align: center;">
+                        <a href="templates/chart_wrapper.html" class="control-button" style="text-decoration: none;">
+                            <i class="fas fa-chart-area"></i>
+                            View Template
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Components -->
+        <div class="category-section">
+            <h2 class="category-title">
+                <i class="fas fa-database category-icon"></i>
+                Data Components
+            </h2>
+            
+            <div class="widget-grid grid-auto">
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <h3><i class="fas fa-table"></i> Data Table Demo</h3>
+                            <p>Interactive data table with search, filters, and pagination</p>
+                        </div>
+                    </div>
+                    <div class="widget-content" style="text-align: center;">
+                        <a href="demos/data_table_demo.html" class="control-button" style="text-decoration: none;">
+                            <i class="fas fa-table"></i>
+                            View Data Table
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <h3><i class="fas fa-tachometer-alt"></i> Dashboard Template</h3>
+                            <p>Complete dashboard layout with widgets and metrics</p>
+                        </div>
+                    </div>
+                    <div class="widget-content" style="text-align: center;">
+                        <a href="dashboard.html" class="control-button" style="text-decoration: none;">
+                            <i class="fas fa-tachometer-alt"></i>
+                            View Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Foundation Templates -->
+        <div class="category-section">
+            <h2 class="category-title">
+                <i class="fas fa-code category-icon"></i>
+                Foundation Templates
+            </h2>
+            
+            <div class="widget-grid grid-auto">
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <h3><i class="fas fa-file-code"></i> Base Template</h3>
+                            <p>Foundation template for building new pages with LocalBase styling</p>
+                        </div>
+                    </div>
+                    <div class="widget-content" style="text-align: center;">
+                        <a href="templates/base.html" class="control-button" style="text-decoration: none;">
+                            <i class="fas fa-file-code"></i>
+                            View Base Template
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Gallery functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate widgets on load
+            const widgets = document.querySelectorAll('.widget');
+            widgets.forEach((widget, index) => {
+                widget.style.opacity = '0';
+                widget.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    widget.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    widget.style.opacity = '1';
+                    widget.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

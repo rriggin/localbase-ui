@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RoofMaxx Deals - SIMPLE VERSION - LocalBase</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 40px;
+            background: #1E1E2E;
+            color: white;
+        }
+        .chart-container { 
+            width: 90%; 
+            height: 400px; 
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        h1 { text-align: center; color: #5F8DFF; }
+    </style>
+</head>
+<body>
+    <h1>RoofMaxx Deals - SIMPLE VERSION</h1>
+    <div class="chart-container">
+        <canvas id="myChart"></canvas>
+    </div>
+
+    <script>
+        const data = [
+  {
+    "date": "2025-07-28",
+    "deals": 1,
+    "value": 100
+  },
+  {
+    "date": "2025-07-29",
+    "deals": 1,
+    "value": 150
+  },
+  {
+    "date": "2025-07-30",
+    "deals": 5,
+    "value": 200
+  },
+  {
+    "date": "2025-07-31",
+    "deals": 1,
+    "value": 120
+  }
+];
+        
+        // Extract labels and values
+        const labels = data.map(d => d.date);
+        const datasets = [];
+        
+        // Get all value keys (excluding 'date')
+        const valueKeys = Object.keys(data[0] || {}).filter(k => k !== 'date');
+        
+        const colors = ['#5F8DFF', '#5DD6C7', '#FFB366', '#B794F6'];
+        
+        valueKeys.forEach((key, i) => {
+            datasets.push({
+                label: key.charAt(0).toUpperCase() + key.slice(1),
+                data: data.map(d => d[key]),
+                borderColor: colors[i % colors.length],
+                backgroundColor: colors[i % colors.length] + '20',
+                tension: 0.1
+            });
+        });
+
+        const ctx = document.getElementById('myChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'RoofMaxx Deals - SIMPLE VERSION'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

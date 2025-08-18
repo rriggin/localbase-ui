@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RoofMaxx Deals - Last 30 Days - LocalBase</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 40px;
+            background: #1E1E2E;
+            color: white;
+        }
+        .chart-container { 
+            width: 90%; 
+            height: 400px; 
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        h1 { text-align: center; color: #5F8DFF; }
+    </style>
+</head>
+<body>
+    <h1>RoofMaxx Deals - Last 30 Days</h1>
+    <div class="chart-container">
+        <canvas id="myChart"></canvas>
+    </div>
+
+    <script>
+        const data = [
+  {
+    "date": "2025-07-04",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-05",
+    "deals": 2
+  },
+  {
+    "date": "2025-07-06",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-07",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-10",
+    "deals": 2
+  },
+  {
+    "date": "2025-07-11",
+    "deals": 2
+  },
+  {
+    "date": "2025-07-13",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-15",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-16",
+    "deals": 4
+  },
+  {
+    "date": "2025-07-17",
+    "deals": 7
+  },
+  {
+    "date": "2025-07-18",
+    "deals": 3
+  },
+  {
+    "date": "2025-07-19",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-21",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-23",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-24",
+    "deals": 3
+  },
+  {
+    "date": "2025-07-25",
+    "deals": 2
+  },
+  {
+    "date": "2025-07-27",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-28",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-29",
+    "deals": 1
+  },
+  {
+    "date": "2025-07-30",
+    "deals": 5
+  },
+  {
+    "date": "2025-07-31",
+    "deals": 1
+  }
+];
+        
+        // Extract labels and values
+        const labels = data.map(d => d.date);
+        const datasets = [];
+        
+        // Get all value keys (excluding 'date')
+        const valueKeys = Object.keys(data[0] || {}).filter(k => k !== 'date');
+        
+        const colors = ['#5F8DFF', '#5DD6C7', '#FFB366', '#B794F6'];
+        
+        valueKeys.forEach((key, i) => {
+            datasets.push({
+                label: key.charAt(0).toUpperCase() + key.slice(1),
+                data: data.map(d => d[key]),
+                borderColor: colors[i % colors.length],
+                backgroundColor: colors[i % colors.length] + '20',
+                tension: 0.1
+            });
+        });
+
+        const ctx = document.getElementById('myChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'RoofMaxx Deals - Last 30 Days'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

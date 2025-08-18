@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LocalBase - Business Intelligence Platform</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- External CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .marketing-hero {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 80px 40px;
+        }
+        .marketing-hero h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .marketing-hero p {
+            font-size: 1.25rem;
+            color: #6b7280;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 60px;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 60px;
+        }
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: left;
+        }
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .feature-icon i {
+            font-size: 20px;
+            color: white;
+        }
+        .feature-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #f9fafb;
+        }
+        .feature-card p {
+            color: #9ca3af;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <span>local</span>&nbsp;<strong>BASE</strong>
+        </div>
+        
+        <a href="#" class="nav-item">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        
+        <a href="#features" class="nav-item">
+            <i class="fas fa-star"></i>
+            <span>Features</span>
+        </a>
+        
+        <a href="#pricing" class="nav-item">
+            <i class="fas fa-dollar-sign"></i>
+            <span>Pricing</span>
+        </a>
+        
+        <a href="#contact" class="nav-item">
+            <i class="fas fa-envelope"></i>
+            <span>Contact</span>
+        </a>
+        
+        <div class="sidebar-footer">
+            <!-- LocalBase App Access -->
+            <div class="sidebar-careers-promotion">
+                <h4>Ready to Get Started?</h4>
+                <p>Access your business intelligence dashboard and start transforming your data into insights.</p>
+                <div class="careers-actions">
+                    <a href="/app/" class="sidebar-careers-button">
+                        <i class="fas fa-rocket"></i> Launch App
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="marketing-hero">
+            <h1>Transform Your Business Data Into Actionable Insights</h1>
+            <p>LocalBase is the business intelligence platform that makes it easy to understand your data, track your performance, and make informed decisions. No technical expertise required.</p>
+            
+            <a href="/app/" class="cta-button">
+                <i class="fas fa-play"></i>
+                Start Your Analysis
+            </a>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Real-time Analytics</h3>
+                    <p>Monitor your business performance with live dashboards and automated reports that update in real-time.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h3>Natural Language Queries</h3>
+                    <p>Ask questions about your data in plain English. No SQL or complex formulas needed.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <h3>Connect All Your Data</h3>
+                    <p>Integrate with your existing tools and databases. One platform for all your business intelligence needs.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3>Mobile Ready</h3>
+                    <p>Access your insights anywhere, anytime. Fully responsive design that works on all devices.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Enterprise Security</h3>
+                    <p>Your data is protected with enterprise-grade security and compliance standards.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Team Collaboration</h3>
+                    <p>Share insights, create reports, and collaborate with your team in one unified workspace.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

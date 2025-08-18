@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>LocalBase Metrics</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --primary: #5F8DFF;
+            --primary-dark: #3A6FE3;
+            --success: #5DD6C7;
+            --warning: #FFB366;
+            --danger: #FF6B6B;
+            --dark: #1E1E2E;
+            --dark-card: #252538;
+            --text: #FFFFFF;
+            --text-muted: #B8B8D0;
+            --border: #404060;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--dark);
+            color: var(--text);
+            padding-bottom: 60px;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: var(--dark-card);
+            padding: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .logo .highlight {
+            color: var(--primary);
+        }
+
+        .refresh-btn {
+            background: var(--primary);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        /* Date Range Selector */
+        .date-range {
+            padding: 12px 16px;
+            background: var(--dark-card);
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .date-pill {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .date-pill.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Metrics Grid */
+        .metrics-container {
+            padding: 16px;
+        }
+
+        .metric-card {
+            background: var(--dark-card);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .metric-title {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .metric-icon.success {
+            background: rgba(93, 214, 199, 0.2);
+            color: var(--success);
+        }
+
+        .metric-icon.primary {
+            background: rgba(95, 141, 255, 0.2);
+            color: var(--primary);
+        }
+
+        .metric-icon.warning {
+            background: rgba(255, 179, 102, 0.2);
+            color: var(--warning);
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .metric-change {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .metric-change.positive {
+            color: var(--success);
+        }
+
+        .metric-change.negative {
+            color: var(--danger);
+        }
+
+        /* Chart Card */
+        .chart-card {
+            background: var(--dark-card);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 200px;
+        }
+
+        /* List View */
+        .list-card {
+            background: var(--dark-card);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-label {
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        .list-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--dark-card);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 11px;
+            transition: color 0.2s;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item i {
+            font-size: 20px;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            color: var(--text-muted);
+        }
+
+        /* Pull to Refresh */
+        .pull-to-refresh {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateY(-100%);
+            transition: transform 0.3s;
+            background: var(--dark-card);
+            z-index: 99;
+        }
+
+        .pull-to-refresh.active {
+            transform: translateY(0);
+        }
+
+        /* Responsive adjustments for larger screens */
+        @media (min-width: 768px) {
+            .metrics-container {
+                max-width: 768px;
+                margin: 0 auto;
+            }
+
+            .metrics-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .metric-card {
+                margin-bottom: 0;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .metrics-container {
+                max-width: 1024px;
+            }
+
+            .metrics-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Pull to Refresh Indicator -->
+    <div class="pull-to-refresh" id="pullToRefresh">
+        <i class="fas fa-sync fa-spin"></i>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                Local<span class="highlight">Base</span>
+            </div>
+            <button class="refresh-btn" onclick="refreshData()">
+                <i class="fas fa-sync-alt"></i>
+                Refresh
+            </button>
+        </div>
+    </header>
+
+    <!-- Date Range Selector -->
+    <div class="date-range">
+        <button class="date-pill active" data-range="today">Today</button>
+        <button class="date-pill" data-range="week">This Week</button>
+        <button class="date-pill" data-range="month">This Month</button>
+        <button class="date-pill" data-range="quarter">Quarter</button>
+        <button class="date-pill" data-range="year">Year</button>
+    </div>
+
+    <!-- Metrics Container -->
+    <div class="metrics-container">
+        <!-- Key Metrics Grid -->
+        <div class="metrics-grid">
+            <!-- RoofMaxx Deals -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">Deals</div>
+                    <div class="metric-icon success">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                </div>
+                <div class="metric-value" id="dealsCount">--</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span id="dealsChange">+0%</span> vs last period
+                </div>
+            </div>
+
+            <!-- Google Ads Spend -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">Ad Spend</div>
+                    <div class="metric-icon primary">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                </div>
+                <div class="metric-value" id="adSpend">--</div>
+                <div class="metric-change negative">
+                    <i class="fas fa-arrow-down"></i>
+                    <span id="spendChange">-0%</span> vs last period
+                </div>
+            </div>
+
+            <!-- Conversion Rate -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">Conv. Rate</div>
+                    <div class="metric-icon warning">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                </div>
+                <div class="metric-value" id="convRate">--</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span id="convChange">+0%</span> vs last period
+                </div>
+            </div>
+        </div>
+
+        <!-- Trend Chart -->
+        <div class="chart-card">
+            <div class="chart-title">Daily Trend</div>
+            <div class="chart-container">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Lead Sources -->
+        <div class="list-card">
+            <div class="chart-title">Top Lead Sources</div>
+            <div id="leadSourcesList">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Campaign Performance -->
+        <div class="chart-card">
+            <div class="chart-title">Campaign Performance</div>
+            <div class="chart-container">
+                <canvas id="campaignChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active">
+            <i class="fas fa-chart-line"></i>
+            <span>Metrics</span>
+        </a>
+        <a href="#" class="nav-item">
+            <i class="fas fa-handshake"></i>
+            <span>Deals</span>
+        </a>
+        <a href="#" class="nav-item">
+            <i class="fas fa-ad"></i>
+            <span>Ads</span>
+        </a>
+        <a href="#" class="nav-item">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+        </a>
+    </nav>
+
+    <script>
+        // Sample data - replace with actual API calls
+        const metricsData = {
+            today: {
+                deals: 3,
+                adSpend: 45.23,
+                convRate: 2.3,
+                dealsChange: 15,
+                spendChange: -8,
+                convChange: 12
+            },
+            week: {
+                deals: 13,
+                adSpend: 312.45,
+                convRate: 2.8,
+                dealsChange: 8,
+                spendChange: -3,
+                convChange: 5
+            },
+            month: {
+                deals: 47,
+                adSpend: 1243.67,
+                convRate: 3.1,
+                dealsChange: 12,
+                spendChange: 4,
+                convChange: 9
+            },
+            quarter: {
+                deals: 156,
+                adSpend: 4567.89,
+                convRate: 2.9,
+                dealsChange: 6,
+                spendChange: 2,
+                convChange: 3
+            },
+            year: {
+                deals: 913,
+                adSpend: 36838.04,
+                convRate: 2.7,
+                dealsChange: 18,
+                spendChange: 15,
+                convChange: 7
+            }
+        };
+
+        // Initialize charts
+        let trendChart, campaignChart;
+
+        function initCharts() {
+            // Trend Chart
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            trendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Deals',
+                        data: [2, 3, 1, 4, 2, 3, 2],
+                        borderColor: '#5DD6C7',
+                        backgroundColor: 'rgba(93, 214, 199, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Ad Spend',
+                        data: [45, 52, 38, 61, 44, 48, 41],
+                        borderColor: '#5F8DFF',
+                        backgroundColor: 'rgba(95, 141, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#B8B8D0'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: false,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#B8B8D0'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Campaign Chart
+            const campaignCtx = document.getElementById('campaignChart').getContext('2d');
+            campaignChart = new Chart(campaignCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['RoofMaxx KC', 'KC Restoration', 'Direct', 'Other'],
+                    datasets: [{
+                        data: [45, 30, 15, 10],
+                        backgroundColor: [
+                            '#5F8DFF',
+                            '#5DD6C7',
+                            '#FFB366',
+                            '#B794F6'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#B8B8D0',
+                                padding: 10,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update metrics display
+        function updateMetrics(range) {
+            const data = metricsData[range];
+            
+            // Update values
+            document.getElementById('dealsCount').textContent = data.deals;
+            document.getElementById('adSpend').textContent = `$${data.adSpend.toLocaleString()}`;
+            document.getElementById('convRate').textContent = `${data.convRate}%`;
+            
+            // Update changes
+            document.getElementById('dealsChange').textContent = `+${data.dealsChange}%`;
+            document.getElementById('spendChange').textContent = `${data.spendChange > 0 ? '+' : ''}${data.spendChange}%`;
+            document.getElementById('convChange').textContent = `+${data.convChange}%`;
+            
+            // Update change indicators
+            document.querySelector('#dealsChange').parentElement.className = 
+                data.dealsChange > 0 ? 'metric-change positive' : 'metric-change negative';
+            document.querySelector('#spendChange').parentElement.className = 
+                data.spendChange < 0 ? 'metric-change positive' : 'metric-change negative';
+            document.querySelector('#convChange').parentElement.className = 
+                data.convChange > 0 ? 'metric-change positive' : 'metric-change negative';
+        }
+
+        // Update lead sources list
+        function updateLeadSources() {
+            const sources = [
+                { name: 'Google Ads', count: 8, value: '$234.56' },
+                { name: 'Direct Traffic', count: 5, value: '$156.78' },
+                { name: 'Facebook', count: 3, value: '$89.12' },
+                { name: 'Referral', count: 2, value: '$45.67' }
+            ];
+            
+            const listHtml = sources.map(source => `
+                <div class="list-item">
+                    <div class="list-label">${source.name} (${source.count})</div>
+                    <div class="list-value">${source.value}</div>
+                </div>
+            `).join('');
+            
+            document.getElementById('leadSourcesList').innerHTML = listHtml;
+        }
+
+        // Refresh data
+        function refreshData() {
+            const btn = document.querySelector('.refresh-btn i');
+            btn.classList.add('fa-spin');
+            
+            // Simulate API call
+            setTimeout(() => {
+                btn.classList.remove('fa-spin');
+                updateLeadSources();
+            }, 1000);
+        }
+
+        // Date range selection
+        document.querySelectorAll('.date-pill').forEach(pill => {
+            pill.addEventListener('click', function() {
+                document.querySelectorAll('.date-pill').forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                updateMetrics(this.dataset.range);
+            });
+        });
+
+        // Bottom navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Pull to refresh
+        let startY = 0;
+        let isPulling = false;
+
+        document.addEventListener('touchstart', (e) => {
+            if (window.scrollY === 0) {
+                startY = e.touches[0].clientY;
+                isPulling = true;
+            }
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isPulling) return;
+            
+            const currentY = e.touches[0].clientY;
+            const diff = currentY - startY;
+            
+            if (diff > 50) {
+                document.getElementById('pullToRefresh').classList.add('active');
+            }
+        });
+
+        document.addEventListener('touchend', () => {
+            if (document.getElementById('pullToRefresh').classList.contains('active')) {
+                refreshData();
+                setTimeout(() => {
+                    document.getElementById('pullToRefresh').classList.remove('active');
+                }, 1000);
+            }
+            isPulling = false;
+        });
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            updateMetrics('today');
+            updateLeadSources();
+        });
+    </script>
+</body>
+</html>
