@@ -196,6 +196,55 @@
             margin-top: 20px;
         }
 
+        /* Chart Labels */
+        .chart-labels {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .chart-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        .chart-label:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .chart-label.active {
+            border-color: #5F8DFF;
+            background: rgba(95, 141, 255, 0.2);
+        }
+
+        .label-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .label-text {
+            font-size: 14px;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .label-count {
+            font-size: 14px;
+            color: var(--secondary-text);
+            font-weight: 600;
+        }
+
         /* Dots Indicator */
         .dots-container {
             display: flex;
@@ -311,8 +360,11 @@
                     <i class="fas fa-chart-pie"></i>
                 </div>
                 <div class="card-title">Leads by Source</div>
-                <div class="chart-container" style="margin-top: 30px; height: 300px;">
+                <div class="chart-container" style="margin-top: 30px; height: 220px;">
                     <canvas id="sourcesChart"></canvas>
+                </div>
+                <div class="chart-labels" id="chartLabels">
+                    <!-- Labels will be populated by JavaScript -->
                 </div>
             </div>
         </div>
@@ -403,14 +455,18 @@
                 return;
             }
 
-            new Chart(ctx, {
+            const colors = ['#5F8DFF', '#5DD6C7', '#FFB366', '#B794F6', '#FF6B6B', '#4ECDC4'];
+
+            const chart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: data.map(s => s.name),
                     datasets: [{
                         data: data.map(s => s.count),
-                        backgroundColor: ['#5F8DFF', '#5DD6C7', '#FFB366', '#B794F6', '#FF6B6B', '#4ECDC4'],
-                        borderWidth: 0
+                        backgroundColor: colors.slice(0, data.length),
+                        borderWidth: 0,
+                        hoverBorderWidth: 3,
+                        hoverBorderColor: '#ffffff'
                     }]
                 },
                 options: {
@@ -427,8 +483,50 @@
                             borderColor: '#5F8DFF',
                             borderWidth: 1
                         }
+                    },
+                    onHover: (event, elements) => {
+                        // Update label highlighting on hover
+                        updateLabelHighlight(elements.length > 0 ? elements[0].index : -1);
                     }
                 }
+            });
+
+            // Create interactive labels
+            createChartLabels(data, colors, chart);
+        }
+
+        // Create clickable labels below the chart
+        function createChartLabels(data, colors, chart) {
+            const labelsContainer = document.getElementById('chartLabels');
+            
+            const labelsHtml = data.map((item, index) => `
+                <div class="chart-label" data-index="${index}">
+                    <div class="label-color" style="background-color: ${colors[index]}"></div>
+                    <span class="label-text">${item.name}</span>
+                    <span class="label-count">${item.count}</span>
+                </div>
+            `).join('');
+            
+            labelsContainer.innerHTML = labelsHtml;
+
+            // Add click handlers to labels
+            labelsContainer.querySelectorAll('.chart-label').forEach((label, index) => {
+                label.addEventListener('click', () => {
+                    // Toggle chart segment highlight
+                    chart.toggleDataVisibility(index);
+                    chart.update();
+                    
+                    // Toggle label active state
+                    updateLabelHighlight(chart.isDatasetVisible(0) && chart.getDataVisibility(index) ? index : -1);
+                });
+            });
+        }
+
+        // Update label highlighting
+        function updateLabelHighlight(activeIndex) {
+            const labels = document.querySelectorAll('.chart-label');
+            labels.forEach((label, index) => {
+                label.classList.toggle('active', index === activeIndex);
             });
         }
 
