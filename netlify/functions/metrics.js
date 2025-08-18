@@ -28,11 +28,11 @@ exports.handler = async (event, context) => {
 
     // Try multiple possible paths for databases
     const possiblePaths = [
+      path.join(process.cwd(), 'databases'),
+      path.join('/var/task', 'databases'),
+      path.join(__dirname, '..', '..', 'databases'),
       path.join(process.cwd(), 'data', 'roofmaxx'),
-      path.join('/opt/build/repo', 'data', 'roofmaxx'),
-      path.join(__dirname, '..', '..', 'data', 'roofmaxx'),
-      path.join('/var/task', 'data', 'roofmaxx'),
-      path.join('/tmp', 'data', 'roofmaxx')
+      path.join('/var/task', 'data', 'roofmaxx')
     ];
     
     let dbDir = null;
