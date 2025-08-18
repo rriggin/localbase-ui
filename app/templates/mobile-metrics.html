@@ -445,9 +445,9 @@
         // Initialize sources chart
         function initSourcesChart() {
             const ctx = document.getElementById('sourcesChart').getContext('2d');
-            const data = yesterdayData.sources.filter(s => s.count > 0);
+            const rawData = yesterdayData.sources.filter(s => s.count > 0);
             
-            if (data.length === 0) {
+            if (rawData.length === 0) {
                 ctx.font = '14px Inter';
                 ctx.fillStyle = '#B8B8D0';
                 ctx.textAlign = 'center';
@@ -455,15 +455,17 @@
                 return;
             }
 
+            // Sort data by count descending to ensure consistent ordering
+            const sortedData = [...rawData].sort((a, b) => b.count - a.count);
             const colors = ['#5F8DFF', '#5DD6C7', '#FFB366', '#B794F6', '#FF6B6B', '#4ECDC4'];
 
             const chart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: data.map(s => s.name),
+                    labels: sortedData.map(s => s.name),
                     datasets: [{
-                        data: data.map(s => s.count),
-                        backgroundColor: colors.slice(0, data.length),
+                        data: sortedData.map(s => s.count),
+                        backgroundColor: colors.slice(0, sortedData.length),
                         borderWidth: 0,
                         hoverBorderWidth: 3,
                         hoverBorderColor: '#ffffff'
@@ -491,8 +493,8 @@
                 }
             });
 
-            // Create interactive labels
-            createChartLabels(data, colors, chart);
+            // Create interactive labels using the same sorted data
+            createChartLabels(sortedData, colors, chart);
         }
 
         // Create clickable labels below the chart

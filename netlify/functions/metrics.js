@@ -33,13 +33,13 @@ exports.handler = async (event, context) => {
         "detail": "Yesterday's total",
         "sources": [
           {
-            "code": "NAP-L",
-            "name": "NAP-L", 
+            "code": "MICRO",
+            "name": "MICRO",
             "count": 1
           },
           {
-            "code": "MICRO",
-            "name": "MICRO",
+            "code": "NAP-L",
+            "name": "NAP-L", 
             "count": 1
           }
         ]
