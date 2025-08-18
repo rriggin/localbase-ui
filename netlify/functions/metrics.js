@@ -26,12 +26,50 @@ exports.handler = async (event, context) => {
     yesterday.setDate(yesterday.getDate() - 1);
     const dateStr = yesterday.toISOString().split('T')[0];
 
-    // Try to connect to databases
-    const dbPath = path.join(process.cwd(), 'data', 'roofmaxx', 'roofmaxx_deals.db');
-    const adsDbPath = path.join(process.cwd(), 'data', 'roofmaxx', 'roofmaxx_google_ads.db');
+    // Try multiple possible paths for databases
+    const fs = require('fs');
+    const possiblePaths = [
+      path.join(process.cwd(), 'data', 'roofmaxx'),
+      path.join('/opt/build/repo', 'data', 'roofmaxx'),
+      path.join(__dirname, '..', '..', 'data', 'roofmaxx')
+    ];
     
-    let leads = { count: 0, detail: 'Database not found', sources: [] };
-    let adSpend = { amount: 0, detail: 'Database not found' };
+    let dbDir = null;
+    for (const testPath of possiblePaths) {
+      if (fs.existsSync(testPath)) {
+        dbDir = testPath;
+        break;
+      }
+    }
+    
+    console.log('Process cwd:', process.cwd());
+    console.log('Function dirname:', __dirname);
+    console.log('Checked paths:', possiblePaths);
+    console.log('Found db directory:', dbDir);
+    
+    let leads = { count: 0, detail: `Database directory not found. Checked: ${possiblePaths.join(', ')}`, sources: [] };
+    let adSpend = { amount: 0, detail: 'Database directory not found' };
+    
+    if (!dbDir) {
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          date: dateStr,
+          leads,
+          adSpend,
+          errors: ['Database directory not found']
+        })
+      };
+    }
+    
+    const dbPath = path.join(dbDir, 'roofmaxx_deals.db');
+    const adsDbPath = path.join(dbDir, 'roofmaxx_google_ads.db');
+    
+    console.log('Trying deals DB at:', dbPath);
+    console.log('Trying ads DB at:', adsDbPath);
+    console.log('Deals DB exists:', fs.existsSync(dbPath));
+    console.log('Ads DB exists:', fs.existsSync(adsDbPath));
 
     // Helper to promisify database operations
     const dbGet = (db, query, params) => {
@@ -54,13 +92,19 @@ exports.handler = async (event, context) => {
 
     try {
       // Get leads data
-      const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY);
+      console.log('Opening deals database...');
+      const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
+        if (err) console.error('DB open error:', err);
+        else console.log('Deals DB opened successfully');
+      });
       
       const leadsRaw = await dbAll(db, `
         SELECT lead_source, raw_data
         FROM deals 
         WHERE DATE(created_at) = ?
       `, [dateStr]);
+      
+      console.log('Found', leadsRaw.length, 'leads for', dateStr);
       
       // Count by source, extracting from raw_data if needed
       const sourceCounts = {};
@@ -99,7 +143,7 @@ exports.handler = async (event, context) => {
       db.close();
     } catch (error) {
       console.error('Deals database error:', error);
-      leads.detail = `Deals DB error: ${error.message}`;
+      leads.detail = `Deals DB error: ${error.message} (DB path: ${dbPath})`;
     }
 
     try {
