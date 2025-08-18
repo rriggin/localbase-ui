@@ -2,9 +2,6 @@
   publish = "."
   functions = "netlify/functions"
 
-[functions]
-  python_runtime = "python3.8"
-
 [[redirects]]
   from = "/api/metrics/*"
   to = "/.netlify/functions/metrics/:splat"
