@@ -6,6 +6,6 @@
     "build": "echo 'No build needed for static site'"
   },
   "dependencies": {
-    "sqlite3": "^5.1.6"
+    "sql.js": "^1.8.0"
   }
 }

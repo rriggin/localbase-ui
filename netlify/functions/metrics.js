@@ -1,6 +1,6 @@
-const sqlite3 = require('sqlite3').verbose();
+const initSqlJs = require('sql.js');
+const fs = require('fs');
 const path = require('path');
-const { promisify } = require('util');
 
 exports.handler = async (event, context) => {
   // CORS headers
@@ -27,7 +27,6 @@ exports.handler = async (event, context) => {
     const dateStr = yesterday.toISOString().split('T')[0];
 
     // Try multiple possible paths for databases
-    const fs = require('fs');
     const possiblePaths = [
       path.join(process.cwd(), 'data', 'roofmaxx'),
       path.join('/opt/build/repo', 'data', 'roofmaxx'),
@@ -71,38 +70,28 @@ exports.handler = async (event, context) => {
     console.log('Deals DB exists:', fs.existsSync(dbPath));
     console.log('Ads DB exists:', fs.existsSync(adsDbPath));
 
-    // Helper to promisify database operations
-    const dbGet = (db, query, params) => {
-      return new Promise((resolve, reject) => {
-        db.get(query, params, (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        });
-      });
-    };
-
-    const dbAll = (db, query, params) => {
-      return new Promise((resolve, reject) => {
-        db.all(query, params, (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows);
-        });
-      });
-    };
+    // Initialize SQL.js
+    const SQL = await initSqlJs();
 
     try {
       // Get leads data
-      console.log('Opening deals database...');
-      const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READONLY, (err) => {
-        if (err) console.error('DB open error:', err);
-        else console.log('Deals DB opened successfully');
-      });
+      console.log('Reading deals database...');
+      const dealsDbBuffer = fs.readFileSync(dbPath);
+      const dealsDb = new SQL.Database(dealsDbBuffer);
       
-      const leadsRaw = await dbAll(db, `
+      const leadsStmt = dealsDb.prepare(`
         SELECT lead_source, raw_data
         FROM deals 
         WHERE DATE(created_at) = ?
-      `, [dateStr]);
+      `);
+      
+      const leadsRaw = [];
+      leadsStmt.bind([dateStr]);
+      while (leadsStmt.step()) {
+        const row = leadsStmt.getAsObject();
+        leadsRaw.push(row);
+      }
+      leadsStmt.free();
       
       console.log('Found', leadsRaw.length, 'leads for', dateStr);
       
@@ -140,7 +129,7 @@ exports.handler = async (event, context) => {
         sources
       };
       
-      db.close();
+      dealsDb.close();
     } catch (error) {
       console.error('Deals database error:', error);
       leads.detail = `Deals DB error: ${error.message} (DB path: ${dbPath})`;
@@ -148,13 +137,22 @@ exports.handler = async (event, context) => {
 
     try {
       // Get ad spend data
-      const adsDb = new sqlite3.Database(adsDbPath, sqlite3.OPEN_READONLY);
+      console.log('Reading ads database...');
+      const adsDbBuffer = fs.readFileSync(adsDbPath);
+      const adsDb = new SQL.Database(adsDbBuffer);
       
-      const result = await dbGet(adsDb, `
+      const spendStmt = adsDb.prepare(`
         SELECT SUM(cost) as total_cost, COUNT(*) as campaigns
         FROM google_ads_data 
         WHERE date = ?
-      `, [dateStr]);
+      `);
+      
+      spendStmt.bind([dateStr]);
+      let result = null;
+      if (spendStmt.step()) {
+        result = spendStmt.getAsObject();
+      }
+      spendStmt.free();
       
       adSpend = {
         amount: result?.total_cost || 0,
