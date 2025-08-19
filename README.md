@@ -37,4 +37,4 @@ Then visit:
 
 ## Architecture
 
-This is the frontend-only repository. The backend data processing and AI services are in the main `localbase` repository.
+This is the frontend-only repository. The backend data processing and AI services are in the main `localbase` repository.# Database last updated: Tue Aug 19 11:39:47 CDT 2025
