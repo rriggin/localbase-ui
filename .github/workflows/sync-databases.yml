@@ -1,0 +1,109 @@
+name: Sync Databases from LocalBase
+
+on:
+  # Run daily at 6 AM EST (11 AM UTC)
+  schedule:
+    - cron: '0 11 * * *'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+  
+  # Run when databases are updated in the main localbase repo
+  repository_dispatch:
+    types: [database-updated]
+
+jobs:
+  sync-databases:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout localbase-ui repo
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+    
+    - name: Checkout localbase repo (source databases)
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ github.repository_owner }}/localbase
+        path: localbase-source
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Copy updated databases
+      run: |
+        # Create directories if they don't exist
+        mkdir -p netlify/functions
+        mkdir -p data/roofmaxx
+        
+        # Copy databases from localbase repo
+        if [ -f localbase-source/data/roofmaxx/roofmaxx_deals.db ]; then
+          cp localbase-source/data/roofmaxx/roofmaxx_deals.db netlify/functions/
+          cp localbase-source/data/roofmaxx/roofmaxx_deals.db data/roofmaxx/
+          echo "✅ Copied roofmaxx_deals.db"
+        else
+          echo "⚠️  roofmaxx_deals.db not found"
+        fi
+        
+        if [ -f localbase-source/src/services/google_ads/data/roofmaxx_google_ad_spend.db ]; then
+          cp localbase-source/src/services/google_ads/data/roofmaxx_google_ad_spend.db netlify/functions/roofmaxx_google_ads.db
+          echo "✅ Copied roofmaxx_google_ads.db"
+        else
+          echo "⚠️  roofmaxx_google_ads.db not found"
+        fi
+        
+        # Show file sizes for verification
+        echo "📊 Database file sizes:"
+        ls -lh netlify/functions/*.db 2>/dev/null || echo "No .db files found"
+        ls -lh data/roofmaxx/*.db 2>/dev/null || echo "No roofmaxx .db files found"
+    
+    - name: Check for database changes
+      id: changes
+      run: |
+        if git diff --quiet; then
+          echo "changed=false" >> $GITHUB_OUTPUT
+          echo "No database changes detected"
+        else
+          echo "changed=true" >> $GITHUB_OUTPUT
+          echo "Database changes detected"
+          git status
+        fi
+    
+    - name: Commit and push changes
+      if: steps.changes.outputs.changed == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "Database Sync Action"
+        
+        git add netlify/functions/*.db data/roofmaxx/*.db
+        
+        # Get latest database stats for commit message
+        DEALS_COUNT=$(sqlite3 netlify/functions/roofmaxx_deals.db "SELECT COUNT(*) FROM deals;" 2>/dev/null || echo "0")
+        ADS_COUNT=$(sqlite3 netlify/functions/roofmaxx_google_ads.db "SELECT COUNT(*) FROM google_ads_spend;" 2>/dev/null || echo "0")
+        
+        git commit -m "🔄 Auto-sync databases - Deals: $DEALS_COUNT, Ads: $ADS_COUNT records
+        
+        - Updated roofmaxx_deals.db
+        - Updated roofmaxx_google_ads.db
+        - Triggered by GitHub Actions
+        
+        📅 $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+        
+        git push
+        
+        echo "✅ Databases synced and pushed to GitHub"
+        echo "🚀 Netlify will auto-deploy the changes"
+    
+    - name: No changes detected
+      if: steps.changes.outputs.changed == 'false'
+      run: |
+        echo "✅ Databases are already up to date"
+        echo "No deployment needed"
+    
+    - name: Summary
+      run: |
+        echo "## Database Sync Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- **Deals Database**: $([ -f netlify/functions/roofmaxx_deals.db ] && echo '✅ Updated' || echo '❌ Missing')" >> $GITHUB_STEP_SUMMARY
+        echo "- **Google Ads Database**: $([ -f netlify/functions/roofmaxx_google_ads.db ] && echo '✅ Updated' || echo '❌ Missing')" >> $GITHUB_STEP_SUMMARY
+        echo "- **Changes Detected**: ${{ steps.changes.outputs.changed }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Timestamp**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY

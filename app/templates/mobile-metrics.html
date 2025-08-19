@@ -140,6 +140,21 @@
             color: #FFB366;
         }
 
+        .card-icon.proposals {
+            background: rgba(183, 148, 246, 0.2);
+            color: #B794F6;
+        }
+
+        .card-icon.appointments {
+            background: rgba(255, 107, 107, 0.2);
+            color: #FF6B6B;
+        }
+
+        .card-icon.revenue {
+            background: rgba(78, 205, 196, 0.2);
+            color: #4ECDC4;
+        }
+
         .card-title {
             font-size: 16px;
             color: var(--secondary-text);
@@ -243,6 +258,56 @@
             font-size: 14px;
             color: var(--secondary-text);
             font-weight: 600;
+        }
+
+        /* Detail List Styles */
+        .detail-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid transparent;
+        }
+
+        .detail-item.proposal {
+            border-left-color: #B794F6;
+        }
+
+        .detail-item.appointment {
+            border-left-color: #FF6B6B;
+        }
+
+        .detail-item.revenue {
+            border-left-color: #4ECDC4;
+        }
+
+        .detail-text {
+            font-size: 14px;
+            color: var(--text-color);
+            flex: 1;
+        }
+
+        .detail-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        .detail-meta {
+            font-size: 12px;
+            color: var(--secondary-text);
+            margin-top: 4px;
         }
 
         /* Dots Indicator */
@@ -367,6 +432,45 @@
                     <!-- Labels will be populated by JavaScript -->
                 </div>
             </div>
+
+            <!-- Card 4: Proposals Sent -->
+            <div class="metric-card">
+                <div class="card-icon proposals">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="card-title">Proposals Sent</div>
+                <div class="card-value" id="proposalsCount">-</div>
+                <div class="card-subtitle" id="proposalsTotal">Total Value: Loading...</div>
+                <div class="detail-list" id="proposalsList">
+                    <!-- Proposals will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Card 5: Appointments Set -->
+            <div class="metric-card">
+                <div class="card-icon appointments">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="card-title">Appointments Set</div>
+                <div class="card-value" id="appointmentsCount">-</div>
+                <div class="card-subtitle" id="appointmentsDetail">Loading...</div>
+                <div class="detail-list" id="appointmentsList">
+                    <!-- Appointments will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Card 6: Revenue Collected -->
+            <div class="metric-card">
+                <div class="card-icon revenue">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="card-title">Revenue Collected</div>
+                <div class="card-value" id="revenueTotal">-</div>
+                <div class="card-subtitle" id="revenueDetail">Loading...</div>
+                <div class="detail-list" id="revenueList">
+                    <!-- Revenue will be populated by JavaScript -->
+                </div>
+            </div>
         </div>
     </div>
 
@@ -375,6 +479,9 @@
         <div class="dot active" data-index="0"></div>
         <div class="dot" data-index="1"></div>
         <div class="dot" data-index="2"></div>
+        <div class="dot" data-index="3"></div>
+        <div class="dot" data-index="4"></div>
+        <div class="dot" data-index="5"></div>
     </div>
 
     <script>
@@ -409,7 +516,20 @@
             leadsDetail: "Loading...",
             adSpend: 0,
             spendDetail: "Loading...",
-            sources: []
+            sources: [],
+            proposals: {
+                count: 0,
+                totalValue: 0,
+                items: []
+            },
+            appointments: {
+                count: 0,
+                items: []
+            },
+            revenue: {
+                total: 0,
+                items: []
+            }
         };
 
         // Load data from API
@@ -426,9 +546,22 @@
                 document.getElementById('adSpendValue').textContent = `$${yesterdayData.adSpend.toFixed(2)}`;
                 document.getElementById('spendDetail').textContent = yesterdayData.spendDetail;
 
+                // Update new cards
+                document.getElementById('proposalsCount').textContent = yesterdayData.proposals.count;
+                document.getElementById('proposalsTotal').textContent = `Total Value: $${yesterdayData.proposals.totalValue.toLocaleString()}`;
+                document.getElementById('appointmentsCount').textContent = yesterdayData.appointments.count;
+                document.getElementById('appointmentsDetail').textContent = yesterdayData.appointments.count > 0 ? 
+                    `${yesterdayData.appointments.count} scheduled` : 'No appointments scheduled';
+                document.getElementById('revenueTotal').textContent = `$${yesterdayData.revenue.total.toLocaleString()}`;
+                document.getElementById('revenueDetail').textContent = yesterdayData.revenue.items.length > 0 ? 
+                    `${yesterdayData.revenue.items.length} customers` : 'No revenue collected';
+
                 // Initialize pie chart
                 setTimeout(() => {
                     initSourcesChart();
+                    populateProposalsList();
+                    populateAppointmentsList();
+                    populateRevenueList();
                 }, 100);
                 
             } catch (error) {
@@ -549,7 +682,7 @@
         let cardWidth = 0;
         const cardsWrapper = document.getElementById('cardsWrapper');
         const dots = document.querySelectorAll('.dot');
-        const totalCards = 3;
+        const totalCards = 6;
 
         function calculateCardWidth() {
             // For mobile or narrow screens, use full width plus margin
@@ -706,6 +839,15 @@
                 case '3':
                     goToCard(2);
                     break;
+                case '4':
+                    goToCard(3);
+                    break;
+                case '5':
+                    goToCard(4);
+                    break;
+                case '6':
+                    goToCard(5);
+                    break;
             }
         });
 
@@ -731,6 +873,71 @@
             loadData();
         });
 
+        // Populate proposals list with test data
+        function populateProposalsList() {
+            const container = document.getElementById('proposalsList');
+            
+            if (yesterdayData.proposals.items.length === 0) {
+                container.innerHTML = '<div class="detail-item proposal"><div class="detail-text">No proposals sent</div></div>';
+                return;
+            }
+
+            const html = yesterdayData.proposals.items.map(item => `
+                <div class="detail-item proposal">
+                    <div class="detail-text">
+                        ${item.customer}
+                        <div class="detail-meta">${item.service}</div>
+                    </div>
+                    <div class="detail-value">$${item.value.toLocaleString()}</div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = html;
+        }
+
+        // Populate appointments list with test data
+        function populateAppointmentsList() {
+            const container = document.getElementById('appointmentsList');
+            
+            if (yesterdayData.appointments.items.length === 0) {
+                container.innerHTML = '<div class="detail-item appointment"><div class="detail-text">No appointments set</div></div>';
+                return;
+            }
+
+            const html = yesterdayData.appointments.items.map(item => `
+                <div class="detail-item appointment">
+                    <div class="detail-text">
+                        ${item.customer}
+                        <div class="detail-meta">${item.time} - ${item.type}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = html;
+        }
+
+        // Populate revenue list with test data
+        function populateRevenueList() {
+            const container = document.getElementById('revenueList');
+            
+            if (yesterdayData.revenue.items.length === 0) {
+                container.innerHTML = '<div class="detail-item revenue"><div class="detail-text">No revenue collected</div></div>';
+                return;
+            }
+
+            const html = yesterdayData.revenue.items.map(item => `
+                <div class="detail-item revenue">
+                    <div class="detail-text">
+                        ${item.customer}
+                        <div class="detail-meta">${item.service}</div>
+                    </div>
+                    <div class="detail-value">$${item.amount.toLocaleString()}</div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = html;
+        }
+
         // Fetch real data from LocalBase API
         async function fetchYesterdayData() {
             // Use Netlify function for deployed version, localhost for development
@@ -749,13 +956,40 @@
                 const data = await response.json();
                 console.log('Received data:', data);
                 
-                // Update global data object
+                // Update global data object with API data + test data for new cards
                 yesterdayData = {
                     leads: data.leads.count,
                     leadsDetail: data.leads.detail,
                     adSpend: data.adSpend.amount,
                     spendDetail: data.adSpend.detail,
-                    sources: data.leads.sources
+                    sources: data.leads.sources,
+                    // Test data for new cards
+                    proposals: {
+                        count: 3,
+                        totalValue: 45000,
+                        items: [
+                            { customer: "Smith Residence", service: "Roof Restoration", value: 12000 },
+                            { customer: "Johnson Home", service: "Roof Coating", value: 8500 },
+                            { customer: "Williams Property", service: "Complete Roof System", value: 24500 }
+                        ]
+                    },
+                    appointments: {
+                        count: 4,
+                        items: [
+                            { customer: "Davis Family", time: "9:00 AM", type: "Roof Inspection" },
+                            { customer: "Miller Residence", time: "11:30 AM", type: "Estimate Meeting" },
+                            { customer: "Wilson Home", time: "2:00 PM", type: "Follow-up Visit" },
+                            { customer: "Brown Property", time: "4:30 PM", type: "Contract Signing" }
+                        ]
+                    },
+                    revenue: {
+                        total: 18500,
+                        items: [
+                            { customer: "Anderson Residence", service: "Roof Restoration", amount: 11000 },
+                            { customer: "Taylor Home", service: "Roof Maintenance", amount: 3500 },
+                            { customer: "Thomas Property", service: "Gutter Cleaning", amount: 4000 }
+                        ]
+                    }
                 };
                 
                 // Log any errors from the API
@@ -766,13 +1000,40 @@
             } catch (error) {
                 console.error('Error fetching data:', error);
                 
-                // Fallback to basic error data
+                // Fallback to basic error data with test data for new cards
                 yesterdayData = {
                     leads: 0,
                     leadsDetail: `API Error: ${error.message}`,
                     adSpend: 0,
                     spendDetail: 'Unable to load data',
-                    sources: []
+                    sources: [],
+                    // Test data for new cards (still show even with API error)
+                    proposals: {
+                        count: 3,
+                        totalValue: 45000,
+                        items: [
+                            { customer: "Smith Residence", service: "Roof Restoration", value: 12000 },
+                            { customer: "Johnson Home", service: "Roof Coating", value: 8500 },
+                            { customer: "Williams Property", service: "Complete Roof System", value: 24500 }
+                        ]
+                    },
+                    appointments: {
+                        count: 4,
+                        items: [
+                            { customer: "Davis Family", time: "9:00 AM", type: "Roof Inspection" },
+                            { customer: "Miller Residence", time: "11:30 AM", type: "Estimate Meeting" },
+                            { customer: "Wilson Home", time: "2:00 PM", type: "Follow-up Visit" },
+                            { customer: "Brown Property", time: "4:30 PM", type: "Contract Signing" }
+                        ]
+                    },
+                    revenue: {
+                        total: 18500,
+                        items: [
+                            { customer: "Anderson Residence", service: "Roof Restoration", amount: 11000 },
+                            { customer: "Taylor Home", service: "Roof Maintenance", amount: 3500 },
+                            { customer: "Thomas Property", service: "Gutter Cleaning", amount: 4000 }
+                        ]
+                    }
                 };
                 
                 throw error; // Re-throw to trigger error handling in loadData()
