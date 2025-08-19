@@ -1,6 +1,7 @@
 [build]
   publish = "."
   functions = "netlify/functions"
+  command = "echo 'Static site - no build needed'"
 
 [[redirects]]
   from = "/api/metrics/*"

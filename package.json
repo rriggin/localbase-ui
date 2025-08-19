@@ -2,9 +2,14 @@
   "name": "localbase-ui",
   "version": "1.0.0",
   "description": "LocalBase UI and Netlify Functions",
+  "private": true,
   "scripts": {
-    "build": "echo 'No build needed for static site'"
+    "build": "echo 'Static site - no build needed'",
+    "start": "echo 'Use netlify dev for local development'"
   },
   "dependencies": {
+  },
+  "engines": {
+    "node": ">=16"
   }
 }
