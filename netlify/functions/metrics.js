@@ -1,6 +1,13 @@
 const fs = require('fs');
 const path = require('path');
-const sqlite3 = require('sqlite3');
+
+// Try to import better-sqlite3, fall back to embedded data if it fails
+let Database;
+try {
+  Database = require('better-sqlite3');
+} catch (e) {
+  console.log('better-sqlite3 not available, will use fallback data');
+}
 
 exports.handler = async (event, context) => {
   // CORS headers
@@ -38,31 +45,14 @@ exports.handler = async (event, context) => {
     let errors = [];
 
     // Query leads data
-    if (fs.existsSync(dealsDbPath)) {
+    if (Database && fs.existsSync(dealsDbPath)) {
       try {
-        const dealsDb = new sqlite3.Database(dealsDbPath);
+        const dealsDb = new Database(dealsDbPath, { readonly: true });
         
-        const leadsCount = await new Promise((resolve, reject) => {
-          dealsDb.get(
-            "SELECT COUNT(*) as count FROM deals WHERE date(created_at) = ?",
-            [dateStr],
-            (err, row) => {
-              if (err) reject(err);
-              else resolve(row ? row.count : 0);
-            }
-          );
-        });
+        const leadsCountResult = dealsDb.prepare("SELECT COUNT(*) as count FROM deals WHERE date(created_at) = ?").get(dateStr);
+        const leadsCount = leadsCountResult ? leadsCountResult.count : 0;
 
-        const leadsSources = await new Promise((resolve, reject) => {
-          dealsDb.all(
-            "SELECT lead_source, COUNT(*) as count FROM deals WHERE date(created_at) = ? GROUP BY lead_source ORDER BY count DESC",
-            [dateStr],
-            (err, rows) => {
-              if (err) reject(err);
-              else resolve(rows || []);
-            }
-          );
-        });
+        const leadsSources = dealsDb.prepare("SELECT lead_source, COUNT(*) as count FROM deals WHERE date(created_at) = ? GROUP BY lead_source ORDER BY count DESC").all(dateStr);
 
         dealsDb.close();
 
@@ -82,24 +72,15 @@ exports.handler = async (event, context) => {
         errors.push(`Leads query error: ${err.message}`);
       }
     } else {
-      errors.push('Deals database not found');
+      errors.push(Database ? 'Deals database not found' : 'SQLite not available, using fallback');
     }
 
     // Query ad spend data
-    if (fs.existsSync(adsDbPath)) {
+    if (Database && fs.existsSync(adsDbPath)) {
       try {
-        const adsDb = new sqlite3.Database(adsDbPath);
+        const adsDb = new Database(adsDbPath, { readonly: true });
         
-        const adSpendResult = await new Promise((resolve, reject) => {
-          adsDb.get(
-            "SELECT SUM(cost) as total_spend, COUNT(DISTINCT campaign_name) as campaign_count FROM google_ads_spend WHERE date = ?",
-            [dateStr],
-            (err, row) => {
-              if (err) reject(err);
-              else resolve(row);
-            }
-          );
-        });
+        const adSpendResult = adsDb.prepare("SELECT SUM(cost) as total_spend, COUNT(DISTINCT campaign_name) as campaign_count FROM google_ads_spend WHERE date = ?").get(dateStr);
 
         adsDb.close();
 
@@ -117,7 +98,21 @@ exports.handler = async (event, context) => {
         errors.push(`Ad spend query error: ${err.message}`);
       }
     } else {
-      errors.push('Google Ads database not found');
+      errors.push(Database ? 'Google Ads database not found' : 'SQLite not available, using fallback');
+    }
+
+    // Fallback data if database queries failed
+    if (!Database || errors.length > 0) {
+      console.log('Using fallback data due to database issues');
+      leadsData = {
+        count: 1,
+        detail: "1 new lead (fallback)",
+        sources: [{ code: "MICRO", name: "MICRO", count: 1 }]
+      };
+      adSpendData = {
+        amount: 46.89,
+        detail: "Updated 8/18 data (fallback)"
+      };
     }
 
     const data = {
