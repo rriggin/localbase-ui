@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Netlify functions for LocalBase metrics",
   "dependencies": {
-    "sqlite3": "^5.1.6"
+    "sqlite3": "^5.1.6",
+    "axios": "^1.6.0"
   }
 }
