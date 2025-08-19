@@ -3,6 +3,9 @@
   functions = "netlify/functions"
   command = "echo 'Static site - no build needed'"
 
+[[plugins]]
+  package = "@netlify/plugin-functions-install-core"
+
 [[redirects]]
   from = "/api/metrics/*"
   to = "/.netlify/functions/metrics/:splat"
