@@ -39,7 +39,8 @@ def handler(event, context):
             'date': date_str,
             'leads': leads_data,
             'adSpend': ad_spend_data,
-            'errors': []
+            'errors': [],
+            'exportedAt': datetime.now().isoformat()
         }
         
         return {
@@ -70,7 +71,8 @@ def get_roofmaxx_deals_for_date(date_str):
         db_paths = [
             '/opt/build/repo/data/roofmaxx/roofmaxx_deals.db',  # Netlify deployment
             'data/roofmaxx/roofmaxx_deals.db',  # Local testing
-            '../data/roofmaxx/roofmaxx_deals.db'  # Local testing relative
+            '../data/roofmaxx/roofmaxx_deals.db',  # Local testing relative
+            'netlify/functions/roofmaxx_deals.db'  # Fallback
         ]
         
         db_path = None
@@ -84,7 +86,7 @@ def get_roofmaxx_deals_for_date(date_str):
         if not db_path:
             return {
                 'count': 0,
-                'detail': f'Database not found. Checked: {", ".join(checked_paths)}',
+                'detail': f'Deals database not found. Checked: {", ".join(checked_paths)}',
                 'sources': []
             }
         
@@ -156,11 +158,14 @@ def get_google_ads_spend_for_date(date_str):
         db_paths = [
             '/opt/build/repo/data/roofmaxx/roofmaxx_google_ads.db',  # Netlify deployment
             'data/roofmaxx/roofmaxx_google_ads.db',  # Local testing
-            '../data/roofmaxx/roofmaxx_google_ads.db'  # Local testing relative
+            '../data/roofmaxx/roofmaxx_google_ads.db',  # Local testing relative
+            'netlify/functions/roofmaxx_google_ads.db'  # Fallback
         ]
         
         db_path = None
+        checked_paths = []
         for path in db_paths:
+            checked_paths.append(f"{path}: {os.path.exists(path)}")
             if os.path.exists(path):
                 db_path = path
                 break
@@ -168,16 +173,16 @@ def get_google_ads_spend_for_date(date_str):
         if not db_path:
             return {
                 'amount': 0,
-                'detail': 'Google Ads database not found'
+                'detail': f'Google Ads database not found. Checked: {", ".join(checked_paths)}'
             }
         
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         
-        # Get spend for the date
+        # Get spend for the date - FIXED: use correct table name
         cursor.execute("""
             SELECT SUM(cost) as total_cost, COUNT(*) as campaigns
-            FROM google_ads_data 
+            FROM google_ads_spend 
             WHERE date = ?
         """, (date_str,))
         
