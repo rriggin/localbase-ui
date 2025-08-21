@@ -32,3 +32,11 @@ build/
 
 # Netlify
 .netlify/
+
+# Data exports (contain sensitive information)
+yesterday.json
+last7days.json
+last30days.json
+data/yesterday.json
+data/last7days.json
+data/last30days.json

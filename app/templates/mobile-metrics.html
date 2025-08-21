@@ -1034,21 +1034,64 @@
         // Fetch data for specific time period from static JSON files
         async function fetchDataForPeriod(period) {
             try {
-                // Use static JSON files instead of Netlify functions
-                const jsonUrl = `/data/${period}.json`;
-                console.log('Fetching data from:', jsonUrl);
+                // Use local API endpoint for secure data access
+                let apiUrl;
                 
-                const response = await fetch(jsonUrl);
+                // For local development, use the Flask API on port 5001
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    // Local development - use Flask API
+                    if (period === 'yesterday') {
+                        apiUrl = 'http://localhost:5001/api/metrics/yesterday';
+                    } else {
+                        // For now, we'll use yesterday's endpoint for all periods
+                        // TODO: Add support for date ranges in the API
+                        apiUrl = 'http://localhost:5001/api/metrics/yesterday';
+                    }
+                } else {
+                    // Production - use Netlify functions (to be implemented)
+                    apiUrl = `/api/metrics/${period}`;
+                }
+                
+                console.log('Fetching data from:', apiUrl);
+                
+                const response = await fetch(apiUrl);
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status} for ${jsonUrl}`);
+                    throw new Error(`HTTP error! status: ${response.status} for ${apiUrl}`);
                 }
                 
                 const data = await response.json();
                 console.log('Received data:', data);
                 
-                // Update global data object with JSON data
-                currentData = data;
+                // Transform API response to match our data structure
+                currentData = {
+                    leads: data.leads?.count || 0,
+                    leadsDetail: data.leads?.detail || "No data",
+                    adSpend: data.adSpend?.amount || 0,
+                    spendDetail: data.adSpend?.detail || "No data",
+                    sources: data.leads?.sources || [],
+                    proposals: {
+                        count: data.proposalsSent?.count || 0,
+                        totalValue: data.proposalsSent?.list?.reduce((sum, p) => sum + p.amount, 0) || 0,
+                        items: (data.proposalsSent?.list || []).map(p => ({
+                            customer: p.customer_name,
+                            service: "Roofing Service",
+                            value: p.amount
+                        }))
+                    },
+                    appointments: {
+                        count: 0,
+                        items: []
+                    },
+                    revenue: {
+                        total: data.proposalsWon?.list?.reduce((sum, p) => sum + p.amount, 0) || 0,
+                        items: (data.proposalsWon?.list || []).map(p => ({
+                            customer: p.customer_name,
+                            service: "Roofing Service",
+                            amount: p.amount
+                        }))
+                    }
+                };
                 
             } catch (error) {
                 console.error('Error fetching data:', error);
