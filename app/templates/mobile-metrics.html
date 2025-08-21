@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Yesterday's Metrics</title>
+    <title>Localbase Scorecard</title>
     
     <!-- LocalBase CSS -->
     <link rel="stylesheet" href="../../public/css/styles.css">
@@ -75,6 +75,43 @@
         .date-value {
             font-size: 20px;
             font-weight: 700;
+            color: var(--text-color);
+        }
+
+        /* Time Period Selector */
+        .time-selector {
+            display: flex;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 2px;
+            margin: 16px 0 8px;
+            padding-left: 20px;
+            padding-right: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .time-option {
+            flex: 1;
+            padding: 8px 12px;
+            text-align: center;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--secondary-text);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .time-option.active {
+            background: var(--tide-blue);
+            color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .time-option:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.05);
             color: var(--text-color);
         }
 
@@ -366,6 +403,13 @@
 
         /* Responsive for larger screens */
         @media (min-width: 768px) {
+            .time-selector {
+                max-width: 400px;
+                margin: 16px auto 8px;
+                padding-left: 2px;
+                padding-right: 2px;
+            }
+
             .cards-container {
                 max-width: 420px; /* Match card width exactly */
                 margin: 0 auto;
@@ -392,8 +436,15 @@
         <div class="logo">
             Local<span class="highlight">BASE</span>
         </div>
-        <div class="date-label">YESTERDAY'S METRICS</div>
-        <div class="date-value" id="yesterdayDate">Loading...</div>
+        <div class="date-label" id="dateLabel">YESTERDAY'S METRICS</div>
+        <div class="date-value" id="dateValue">Loading...</div>
+    </div>
+
+    <!-- Time Period Selector -->
+    <div class="time-selector">
+        <div class="time-option active" data-period="yesterday">Yesterday</div>
+        <div class="time-option" data-period="last7days">Last 7</div>
+        <div class="time-option" data-period="last30days">Last 30</div>
     </div>
 
     <!-- Cards Container -->
@@ -485,11 +536,51 @@
     </div>
 
     <script>
+        // Current time period
+        let currentPeriod = 'yesterday';
+
         // Get yesterday's date
         function getYesterdayDate() {
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
             return yesterday;
+        }
+
+        // Get date range for period
+        function getDateRangeForPeriod(period) {
+            const today = new Date();
+            const yesterday = new Date();
+            yesterday.setDate(today.getDate() - 1);
+            
+            switch(period) {
+                case 'yesterday':
+                    return {
+                        start: yesterday,
+                        end: yesterday,
+                        label: "",
+                        value: formatDateDisplay(yesterday)
+                    };
+                case 'last7days':
+                    const week = new Date();
+                    week.setDate(today.getDate() - 7);
+                    return {
+                        start: week,
+                        end: yesterday,
+                        label: "",
+                        value: `${formatDateDisplay(week)} - ${formatDateDisplay(yesterday)}`
+                    };
+                case 'last30days':
+                    const month = new Date();
+                    month.setDate(today.getDate() - 30);
+                    return {
+                        start: month,
+                        end: yesterday,
+                        label: "",
+                        value: `${formatDateDisplay(month)} - ${formatDateDisplay(yesterday)}`
+                    };
+                default:
+                    return getDateRangeForPeriod('yesterday');
+            }
         }
 
         // Format date for display
@@ -506,12 +597,18 @@
             return `${year}-${month}-${day}`;
         }
 
+        // Update date display
+        function updateDateDisplay() {
+            const range = getDateRangeForPeriod(currentPeriod);
+            document.getElementById('dateLabel').textContent = range.label;
+            document.getElementById('dateValue').textContent = range.value;
+        }
+
         // Initialize date
-        const yesterday = getYesterdayDate();
-        document.getElementById('yesterdayDate').textContent = formatDateDisplay(yesterday);
+        updateDateDisplay();
 
         // Data will be loaded from API
-        let yesterdayData = {
+        let currentData = {
             leads: 0,
             leadsDetail: "Loading...",
             adSpend: 0,
@@ -535,26 +632,26 @@
         // Load data from API
         async function loadData() {
             try {
-                // Fetch real data from API
-                await fetchYesterdayData();
+                // Fetch real data from API based on current period
+                await fetchDataForPeriod(currentPeriod);
                 
                 // Update leads card
-                document.getElementById('leadsCount').textContent = yesterdayData.leads;
-                document.getElementById('leadsDetail').textContent = yesterdayData.leadsDetail;
+                document.getElementById('leadsCount').textContent = currentData.leads;
+                document.getElementById('leadsDetail').textContent = currentData.leadsDetail;
 
                 // Update ad spend card  
-                document.getElementById('adSpendValue').textContent = `$${yesterdayData.adSpend.toFixed(2)}`;
-                document.getElementById('spendDetail').textContent = yesterdayData.spendDetail;
+                document.getElementById('adSpendValue').textContent = `$${currentData.adSpend.toFixed(2)}`;
+                document.getElementById('spendDetail').textContent = currentData.spendDetail;
 
                 // Update new cards
-                document.getElementById('proposalsCount').textContent = yesterdayData.proposals.count;
-                document.getElementById('proposalsTotal').textContent = `Total Value: $${yesterdayData.proposals.totalValue.toLocaleString()}`;
-                document.getElementById('appointmentsCount').textContent = yesterdayData.appointments.count;
-                document.getElementById('appointmentsDetail').textContent = yesterdayData.appointments.count > 0 ? 
-                    `${yesterdayData.appointments.count} scheduled` : 'No appointments scheduled';
-                document.getElementById('revenueTotal').textContent = `$${yesterdayData.revenue.total.toLocaleString()}`;
-                document.getElementById('revenueDetail').textContent = yesterdayData.revenue.items.length > 0 ? 
-                    `${yesterdayData.revenue.items.length} customers` : 'No revenue collected';
+                document.getElementById('proposalsCount').textContent = currentData.proposals.count;
+                document.getElementById('proposalsTotal').textContent = `Total Value: $${currentData.proposals.totalValue.toLocaleString()}`;
+                document.getElementById('appointmentsCount').textContent = currentData.appointments.count;
+                document.getElementById('appointmentsDetail').textContent = currentData.appointments.count > 0 ? 
+                    `${currentData.appointments.count} scheduled` : 'No appointments scheduled';
+                document.getElementById('revenueTotal').textContent = `$${currentData.revenue.total.toLocaleString()}`;
+                document.getElementById('revenueDetail').textContent = currentData.revenue.items.length > 0 ? 
+                    `${currentData.revenue.items.length} customers` : 'No revenue collected';
 
                 // Initialize pie chart
                 setTimeout(() => {
@@ -578,7 +675,7 @@
         // Initialize sources chart
         function initSourcesChart() {
             const ctx = document.getElementById('sourcesChart').getContext('2d');
-            const rawData = yesterdayData.sources.filter(s => s.count > 0);
+            const rawData = currentData.sources.filter(s => s.count > 0);
             
             if (rawData.length === 0) {
                 ctx.font = '14px Inter';
@@ -868,21 +965,17 @@
             e.preventDefault();
         });
 
-        // Load data on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            loadData();
-        });
 
         // Populate proposals list with test data
         function populateProposalsList() {
             const container = document.getElementById('proposalsList');
             
-            if (yesterdayData.proposals.items.length === 0) {
+            if (currentData.proposals.items.length === 0) {
                 container.innerHTML = '<div class="detail-item proposal"><div class="detail-text">No proposals sent</div></div>';
                 return;
             }
 
-            const html = yesterdayData.proposals.items.map(item => `
+            const html = currentData.proposals.items.map(item => `
                 <div class="detail-item proposal">
                     <div class="detail-text">
                         ${item.customer}
@@ -899,12 +992,12 @@
         function populateAppointmentsList() {
             const container = document.getElementById('appointmentsList');
             
-            if (yesterdayData.appointments.items.length === 0) {
+            if (currentData.appointments.items.length === 0) {
                 container.innerHTML = '<div class="detail-item appointment"><div class="detail-text">No appointments set</div></div>';
                 return;
             }
 
-            const html = yesterdayData.appointments.items.map(item => `
+            const html = currentData.appointments.items.map(item => `
                 <div class="detail-item appointment">
                     <div class="detail-text">
                         ${item.customer}
@@ -920,12 +1013,12 @@
         function populateRevenueList() {
             const container = document.getElementById('revenueList');
             
-            if (yesterdayData.revenue.items.length === 0) {
+            if (currentData.revenue.items.length === 0) {
                 container.innerHTML = '<div class="detail-item revenue"><div class="detail-text">No revenue collected</div></div>';
                 return;
             }
 
-            const html = yesterdayData.revenue.items.map(item => `
+            const html = currentData.revenue.items.map(item => `
                 <div class="detail-item revenue">
                     <div class="detail-text">
                         ${item.customer}
@@ -938,107 +1031,104 @@
             container.innerHTML = html;
         }
 
-        // Fetch real data from LocalBase API
-        async function fetchYesterdayData() {
-            // Use Netlify function for deployed version, localhost for development
-            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const apiUrl = isLocal ? 'http://localhost:5001/api/metrics/yesterday' : '/api/metrics/yesterday';
-            
+        // Fetch data for specific time period from static JSON files
+        async function fetchDataForPeriod(period) {
             try {
-                console.log('Fetching data from:', apiUrl);
+                // Use static JSON files instead of Netlify functions
+                const jsonUrl = `/data/${period}.json`;
+                console.log('Fetching data from:', jsonUrl);
                 
-                const response = await fetch(apiUrl);
+                const response = await fetch(jsonUrl);
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`HTTP error! status: ${response.status} for ${jsonUrl}`);
                 }
                 
                 const data = await response.json();
                 console.log('Received data:', data);
                 
-                // Update global data object with API data + test data for new cards
-                yesterdayData = {
-                    leads: data.leads.count,
-                    leadsDetail: data.leads.detail,
-                    adSpend: data.adSpend.amount,
-                    spendDetail: data.adSpend.detail,
-                    sources: data.leads.sources,
-                    // Test data for new cards
-                    proposals: {
-                        count: 3,
-                        totalValue: 45000,
-                        items: [
-                            { customer: "Smith Residence", service: "Roof Restoration", value: 12000 },
-                            { customer: "Johnson Home", service: "Roof Coating", value: 8500 },
-                            { customer: "Williams Property", service: "Complete Roof System", value: 24500 }
-                        ]
-                    },
-                    appointments: {
-                        count: 4,
-                        items: [
-                            { customer: "Davis Family", time: "9:00 AM", type: "Roof Inspection" },
-                            { customer: "Miller Residence", time: "11:30 AM", type: "Estimate Meeting" },
-                            { customer: "Wilson Home", time: "2:00 PM", type: "Follow-up Visit" },
-                            { customer: "Brown Property", time: "4:30 PM", type: "Contract Signing" }
-                        ]
-                    },
-                    revenue: {
-                        total: 18500,
-                        items: [
-                            { customer: "Anderson Residence", service: "Roof Restoration", amount: 11000 },
-                            { customer: "Taylor Home", service: "Roof Maintenance", amount: 3500 },
-                            { customer: "Thomas Property", service: "Gutter Cleaning", amount: 4000 }
-                        ]
-                    }
-                };
-                
-                // Log any errors from the API
-                if (data.errors && data.errors.length > 0) {
-                    console.warn('API warnings:', data.errors);
-                }
+                // Update global data object with JSON data
+                currentData = data;
                 
             } catch (error) {
                 console.error('Error fetching data:', error);
                 
-                // Fallback to basic error data with test data for new cards
-                yesterdayData = {
-                    leads: 0,
-                    leadsDetail: `API Error: ${error.message}`,
-                    adSpend: 0,
-                    spendDetail: 'Unable to load data',
-                    sources: [],
-                    // Test data for new cards (still show even with API error)
-                    proposals: {
-                        count: 3,
-                        totalValue: 45000,
-                        items: [
-                            { customer: "Smith Residence", service: "Roof Restoration", value: 12000 },
-                            { customer: "Johnson Home", service: "Roof Coating", value: 8500 },
-                            { customer: "Williams Property", service: "Complete Roof System", value: 24500 }
-                        ]
-                    },
-                    appointments: {
-                        count: 4,
-                        items: [
-                            { customer: "Davis Family", time: "9:00 AM", type: "Roof Inspection" },
-                            { customer: "Miller Residence", time: "11:30 AM", type: "Estimate Meeting" },
-                            { customer: "Wilson Home", time: "2:00 PM", type: "Follow-up Visit" },
-                            { customer: "Brown Property", time: "4:30 PM", type: "Contract Signing" }
-                        ]
-                    },
-                    revenue: {
-                        total: 18500,
-                        items: [
-                            { customer: "Anderson Residence", service: "Roof Restoration", amount: 11000 },
-                            { customer: "Taylor Home", service: "Roof Maintenance", amount: 3500 },
-                            { customer: "Thomas Property", service: "Gutter Cleaning", amount: 4000 }
-                        ]
-                    }
-                };
+                // Fallback to mock data based on period
+                const mockData = generateMockDataForPeriod(period);
+                currentData = mockData;
                 
                 throw error; // Re-throw to trigger error handling in loadData()
             }
         }
+
+        // Generate mock data for different time periods
+        function generateMockDataForPeriod(period) {
+            const multiplier = period === 'yesterday' ? 1 : period === 'last7days' ? 7 : 30;
+            
+            return {
+                leads: 5 * multiplier,
+                leadsDetail: period === 'yesterday' ? "Yesterday's total" : 
+                           period === 'last7days' ? "Last 7 days total" : "Last 30 days total",
+                adSpend: 36.59 * multiplier,
+                spendDetail: period === 'yesterday' ? 'Across 2 campaigns' : 
+                           period === 'last7days' ? 'Across 14 campaigns' : 'Across 60 campaigns',
+                sources: [
+                    {code: 'NAP-L', name: 'NAP-L', count: 3 * multiplier},
+                    {code: 'MICRO', name: 'MICRO', count: 1 * multiplier},
+                    {code: 'GRML', name: 'GRML', count: 1 * multiplier}
+                ],
+                proposals: {
+                    count: 3 * multiplier,
+                    totalValue: 45000 * multiplier,
+                    items: [
+                        { customer: "Smith Residence", service: "Roof Restoration", value: 12000 },
+                        { customer: "Johnson Home", service: "Roof Coating", value: 8500 },
+                        { customer: "Williams Property", service: "Complete Roof System", value: 24500 }
+                    ]
+                },
+                appointments: {
+                    count: 4 * multiplier,
+                    items: [
+                        { customer: "Davis Family", time: "9:00 AM", type: "Roof Inspection" },
+                        { customer: "Miller Residence", time: "11:30 AM", type: "Estimate Meeting" },
+                        { customer: "Wilson Home", time: "2:00 PM", type: "Follow-up Visit" },
+                        { customer: "Brown Property", time: "4:30 PM", type: "Contract Signing" }
+                    ]
+                },
+                revenue: {
+                    total: 18500 * multiplier,
+                    items: [
+                        { customer: "Anderson Residence", service: "Roof Restoration", amount: 11000 },
+                        { customer: "Taylor Home", service: "Roof Maintenance", amount: 3500 },
+                        { customer: "Thomas Property", service: "Gutter Cleaning", amount: 4000 }
+                    ]
+                }
+            };
+        }
+
+        // Time period selector functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add click handlers to time period options
+            document.querySelectorAll('.time-option').forEach(option => {
+                option.addEventListener('click', async () => {
+                    // Update active state
+                    document.querySelectorAll('.time-option').forEach(opt => opt.classList.remove('active'));
+                    option.classList.add('active');
+                    
+                    // Update current period
+                    currentPeriod = option.dataset.period;
+                    
+                    // Update date display
+                    updateDateDisplay();
+                    
+                    // Reload data for new period
+                    await loadData();
+                });
+            });
+            
+            // Initial load
+            loadData();
+        });
     </script>
 </body>
 </html>

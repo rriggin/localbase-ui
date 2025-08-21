@@ -1,0 +1,86 @@
+{
+  "period": "yesterday",
+  "dateRange": {
+    "start": "2025-08-20",
+    "end": "2025-08-20"
+  },
+  "leads": 2,
+  "leadsDetail": "Yesterday's total",
+  "adSpend": 0.0,
+  "spendDetail": "No ad spend data for this date",
+  "sources": [
+    {
+      "code": "NAP-S",
+      "name": "NAP-S",
+      "count": 2
+    }
+  ],
+  "proposals": {
+    "count": 3,
+    "totalValue": 45000,
+    "items": [
+      {
+        "customer": "Smith Residence",
+        "service": "Roof Restoration",
+        "value": 12000
+      },
+      {
+        "customer": "Johnson Home",
+        "service": "Roof Coating",
+        "value": 8500
+      },
+      {
+        "customer": "Williams Property",
+        "service": "Complete Roof System",
+        "value": 24500
+      }
+    ]
+  },
+  "appointments": {
+    "count": 4,
+    "items": [
+      {
+        "customer": "Davis Family",
+        "time": "9:00 AM",
+        "type": "Roof Inspection"
+      },
+      {
+        "customer": "Miller Residence",
+        "time": "11:30 AM",
+        "type": "Estimate Meeting"
+      },
+      {
+        "customer": "Wilson Home",
+        "time": "2:00 PM",
+        "type": "Follow-up Visit"
+      },
+      {
+        "customer": "Brown Property",
+        "time": "4:30 PM",
+        "type": "Contract Signing"
+      }
+    ]
+  },
+  "revenue": {
+    "total": 18500,
+    "items": [
+      {
+        "customer": "Anderson Residence",
+        "service": "Roof Restoration",
+        "amount": 11000
+      },
+      {
+        "customer": "Taylor Home",
+        "service": "Roof Maintenance",
+        "amount": 3500
+      },
+      {
+        "customer": "Thomas Property",
+        "service": "Gutter Cleaning",
+        "amount": 4000
+      }
+    ]
+  },
+  "generatedAt": "2025-08-21T10:50:10.065178",
+  "errors": []
+}
